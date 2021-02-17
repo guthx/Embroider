@@ -14,7 +14,7 @@ namespace Embroider.Quantizers
         {
 
         }
-        public override void MakePalette(int paletteSize)
+        protected override void MakePalette(int paletteSize)
         {
             Palette.Clear();
             var colors = new ConcurrentDictionary<int, PopularityColorRegion>();

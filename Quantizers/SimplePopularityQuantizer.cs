@@ -11,7 +11,7 @@ namespace Embroider.Quantizers
     public class SimplePopularityQuantizer : Quantizer
     {
         public SimplePopularityQuantizer(Image<Lab, double> image) : base(image) { }
-        public override void MakePalette(int paletteSize)
+        protected override void MakePalette(int paletteSize)
         {
             Palette.Clear();
             var colors = new ConcurrentDictionary<Color, int>();

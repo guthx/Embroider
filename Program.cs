@@ -22,15 +22,17 @@ namespace Embroider
         static void Main(string[] args)
         {
             
-            var ahri = new Image<Lab, double>(@"F:\Inne\ahri\ahri_new.jpg");
+            var ahri = new Image<Lab, double>(@"F:\Inne\ahri\ahri.jpg");
             ahri = ImageProcessing.MeanReduce(ahri, 4);
+            ImageProcessing.ReplacePixelsWithDMC(ahri);
             var quantizer = new OctreeQuantizer(ahri, 8, MergeMode.LEAST_IMPORTANT);
-            quantizer.MakePalette(75);
+            quantizer.GeneratePalette(128);
             ImageProcessing.Stretch(quantizer.GetQuantizedImage(), 8).Convert<Bgr, byte>().Save(@"F:\Inne\ahri\ahri_oct.png");
-            quantizer.ChangePaletteToDMC();
-            ImageProcessing.Stretch(quantizer.GetQuantizedImage(), 8).Convert<Bgr, byte>().Save(@"F:\Inne\ahri\ahri_oct_dmc.png");
+            var sheet = quantizer.GenerateExcelSpreadsheet();
+            sheet.SaveAs(new FileInfo(@"F:\Inne\ahri\test.xlsx"));
            // var predictor = ImageProcessing.BuildClusterModel(ImageProcessing.GetPixelValues(ahri), 64);
            // ImageProcessing.Stretch(ImageProcessing.ClusterizeImage(predictor, ahri, 64, true), 8).Convert<Bgr, byte>().Save(@"F:\Inne\ahri\ahri_kmeans_dmc.png");
+            
             /*
             var flosses = new List<DMCRGB>();
             var flossesLab = new List<DmcFloss>();
@@ -52,6 +54,9 @@ namespace Embroider
                     var convertLab = convertHelper.Convert<Lab, double>();
                     flossesLab.Add(new DmcFloss
                     {
+                        R = red,
+                        G = green,
+                        B = blue,
                         L = convertLab[0, 0].X,
                         a = convertLab[0, 0].Y,
                         b = convertLab[0, 0].Z,

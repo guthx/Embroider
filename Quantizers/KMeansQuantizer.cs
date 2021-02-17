@@ -12,7 +12,7 @@ namespace Embroider.Quantizers
     {
         public KMeansQuantizer(Image<Lab, double> image) : base(image) { }
 
-        public override void MakePalette(int paletteSize)
+        protected override void MakePalette(int paletteSize)
         {
             var pixelValues = new PixelValue[pixels.Count];
             for (int i = 0; i < pixels.Count; i++)

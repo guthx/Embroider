@@ -28,7 +28,7 @@ namespace Embroider.Quantizers
             Root = new OctreeNode(0, this);
         }
 
-        override public void MakePalette(int paletteSize)
+        override protected void MakePalette(int paletteSize)
         {
             Root = new OctreeNode(0, this);
             Palette.Clear();

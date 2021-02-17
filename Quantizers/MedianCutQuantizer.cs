@@ -84,7 +84,7 @@ namespace Embroider.Quantizers
             split(pixels.GetRange(medianIndex, pixels.Count/2), depth - 1);
         }
 
-        public override void MakePalette(int paletteSize)
+        protected override void MakePalette(int paletteSize)
         {
             int depth = (int)Math.Log2(paletteSize);
             Palette.Clear();
