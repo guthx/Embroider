@@ -27,16 +27,27 @@ namespace Embroider.Quantizers
             pixels = new List<Color>();
             Palette = new List<Color>();
             _image = image;
-            for (int h = 0; h < image.Height; h++)
-            {
-                for (int w = 0; w < image.Width; w++)
-                {
-                    pixels.Add(new Color((int)image[h, w].X, (int)image[h, w].Y, (int)image[h, w].Z));
-                }
-            }
+            
+        }
+        public virtual void SetImage(Image<Lab, double> image)
+        {
+            _image = image;
+            pixels.Clear();
+            Palette.Clear();
+            DmcPalette.Clear();
+            DmcFlossCount.Clear();
+            DmcFlossMap = new DmcFloss[image.Height, image.Width];
         }
         public virtual void GeneratePalette(int paletteSize, bool generateDmcPalette = true) 
         {
+            pixels.Clear();
+            for (int h = 0; h < _image.Height; h++)
+            {
+                for (int w = 0; w < _image.Width; w++)
+                {
+                    pixels.Add(new Color((int)_image[h, w].X, (int)_image[h, w].Y, (int)_image[h, w].Z));
+                }
+            }
             Palette.Clear();
             DmcPalette.Clear();
             MakePalette(paletteSize);
