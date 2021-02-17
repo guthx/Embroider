@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Embroider": {
+      "commandName": "Project",
+      "workingDirectory": "F:\\Embroider\\Embroider"
+    }
+  }
+}
