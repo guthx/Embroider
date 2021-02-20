@@ -11,8 +11,8 @@ namespace Embroider
         public double L { get; set; }
         public double a { get; set; }
         public double b { get; set; }
-        public double R { get; set; }
-        public double G { get; set; }
-        public double B { get; set; }
+        public double Red { get; set; }
+        public double Green { get; set; }
+        public double Blue { get; set; }
     }
 }

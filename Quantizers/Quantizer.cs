@@ -146,7 +146,7 @@ namespace Embroider.Quantizers
                 {
                     var floss = DmcFlossMap[h, w];
                     worksheet.Cells[h + 1, w + 1].Value = flossesUsed.IndexOf(floss) + 1;
-                    var color = System.Drawing.Color.FromArgb((int)floss.R, (int)floss.G, (int)floss.B);
+                    var color = System.Drawing.Color.FromArgb((int)floss.Red, (int)floss.Green, (int)floss.Blue);
                     worksheet.Cells[h + 1, w + 1].Style.Fill.SetBackground(color);
                     worksheet.Cells[h + 1, w + 1].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
                     worksheet.Cells[h + 1, w + 1].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;

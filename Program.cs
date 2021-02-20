@@ -21,15 +21,17 @@ namespace Embroider
     {
         static void Main(string[] args)
         {
+            /*
             var ahri = new Image<Lab, double>(@"F:\Inne\ahri\ahri.jpg");
             var embroider = new Embroider(ahri);
             embroider.GenerateImage().Convert<Bgr, byte>().Save(@"F:\Inne\ahri\embroider.png");
             embroider.Options.Net = true;
             embroider.GenerateImage().Convert<Bgr, byte>().Save(@"F:\Inne\ahri\embroider2.png");
+            */
             // var predictor = ImageProcessing.BuildClusterModel(ImageProcessing.GetPixelValues(ahri), 64);
             // ImageProcessing.Stretch(ImageProcessing.ClusterizeImage(predictor, ahri, 64, true), 8).Convert<Bgr, byte>().Save(@"F:\Inne\ahri\ahri_kmeans_dmc.png");
 
-            /*
+            
             var flosses = new List<DMCRGB>();
             var flossesLab = new List<DmcFloss>();
             var convertHelper = new Image<Rgb, byte>(1, 1);
@@ -50,9 +52,9 @@ namespace Embroider
                     var convertLab = convertHelper.Convert<Lab, double>();
                     flossesLab.Add(new DmcFloss
                     {
-                        R = red,
-                        G = green,
-                        B = blue,
+                        Red = red,
+                        Green = green,
+                        Blue = blue,
                         L = convertLab[0, 0].X,
                         a = convertLab[0, 0].Y,
                         b = convertLab[0, 0].Z,
@@ -66,7 +68,7 @@ namespace Embroider
             {
                 csv.WriteRecords<DmcFloss>(flossesLab);
             }
-            */
+            
         }
 
 

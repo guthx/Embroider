@@ -13,9 +13,9 @@ namespace Embroider
     {
         private Image<Lab, double> _image;
         private Image<Lab, double> _reducedImage;
+        private Image<Lab, double> _reducedDmcImage;
         private Quantizer _quantizer;
         private Image<Lab, double> _quantizedImage;
-        private ExcelPackage _spreadsheet;
         private EmbroiderOptions _options;
         public EmbroiderOptions Options {
             get => _options;
@@ -26,20 +26,18 @@ namespace Embroider
                     setReducedImage(_image, value.StichSize);
                     setQuantizer(value.QuantizerType, value.OctreeMode);
                     _quantizedImage = null;
-                    _spreadsheet = null;
+                    _reducedDmcImage = null;
                 }
                 else if (value.QuantizerType != _options.QuantizerType ||
                     value.OctreeMode != _options.OctreeMode)
                 {
                     setQuantizer(value.QuantizerType, value.OctreeMode);
                     _quantizedImage = null;
-                    _spreadsheet = null;
                 }  
                 else if (value.MaxColors != _options.MaxColors ||
                     value.OperationOrder != Options.OperationOrder)
                 {
                     _quantizedImage = null;
-                    _spreadsheet = null;
                 }
                 _options = value;
             }
@@ -64,9 +62,12 @@ namespace Embroider
             {
                 if (Options.OperationOrder == OperationOrder.ReplacePixelsFirst)
                 {
-                    var newImage = _reducedImage.Copy();
-                    ImageProcessing.ReplacePixelsWithDMC(newImage);
-                    _quantizer.SetImage(newImage);
+                    if (_reducedDmcImage == null)
+                    {
+                        _reducedDmcImage = _reducedImage.Copy();
+                        ImageProcessing.ReplacePixelsWithDMC(_reducedDmcImage);
+                    }
+                    _quantizer.SetImage(_reducedDmcImage);
                 }
                 else
                 {
@@ -81,9 +82,16 @@ namespace Embroider
         {
             if (_quantizedImage == null)
                 GenerateImage();
-            if (_spreadsheet == null)
-                _spreadsheet = _quantizer.GenerateExcelSpreadsheet();
-            return _spreadsheet;
+            return _quantizer.GenerateExcelSpreadsheet();
+        }
+        public Summary GetSummary()
+        {
+            return new Summary
+            {
+                FlossCount = _quantizer.DmcFlossCount,
+                Height = _quantizedImage.Height,
+                Width = _quantizedImage.Width
+            };
         }
         private void setReducedImage(Image<Lab, double> image, int size)
         {
