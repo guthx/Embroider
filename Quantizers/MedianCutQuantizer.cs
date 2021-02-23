@@ -1,4 +1,5 @@
-﻿using Emgu.CV;
+﻿using Embroider.Ditherers;
+using Emgu.CV;
 using Emgu.CV.Structure;
 using System;
 using System.Collections.Generic;
@@ -8,10 +9,8 @@ namespace Embroider.Quantizers
 {
     public class MedianCutQuantizer : Quantizer
     {
-        public MedianCutQuantizer(Image<Lab, double> image) : base(image)
-        {
+        public MedianCutQuantizer(Image<Lab, double> image, DithererType dithererType) : base(image, dithererType) { }
 
-        }
 
         private void split(List<Color> pixels, int depth)
         {

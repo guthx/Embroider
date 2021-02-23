@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using C5;
+using Embroider.Ditherers;
 
 namespace Embroider.Quantizers
 {
@@ -11,7 +12,7 @@ namespace Embroider.Quantizers
     {
         private int sigBits;
         private float fractionByPopulation;
-        public ModifiedMedianCutQuantizer(Image<Lab, double> image, int _sigBits = 6, float _fractionByPopulation = 0.85f) : base(image)
+        public ModifiedMedianCutQuantizer(Image<Lab, double> image, int _sigBits = 6, float _fractionByPopulation = 0.85f, DithererType dithererType = DithererType.None) : base(image, dithererType)
         {
             sigBits = _sigBits;
             fractionByPopulation = _fractionByPopulation;

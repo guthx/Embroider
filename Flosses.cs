@@ -19,7 +19,7 @@ namespace Embroider
                 if (dmcFlosses == null)
                 {
                     dmcFlosses = new List<DmcFloss>();
-                    using (var reader = new StreamReader(@"F:\Inne\ahri\dmc_lab.csv"))
+                    using (var reader = new StreamReader(@"F:\Inne\ahri\dmc_lab2.csv"))
                     using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                     {
                         dmcFlosses = csv.GetRecords<DmcFloss>().ToList();

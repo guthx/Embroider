@@ -1,4 +1,5 @@
-﻿using Embroider.Quantizers;
+﻿using Embroider.Ditherers;
+using Embroider.Quantizers;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using OfficeOpenXml;
@@ -24,16 +25,21 @@ namespace Embroider
                 if (value.StichSize != _options.StichSize)
                 {
                     setReducedImage(_image, value.StichSize);
-                    setQuantizer(value.QuantizerType, value.OctreeMode);
+                    setQuantizer(value.QuantizerType, value.OctreeMode, value.DithererType);
                     _quantizedImage = null;
                     _reducedDmcImage = null;
                 }
                 else if (value.QuantizerType != _options.QuantizerType ||
                     value.OctreeMode != _options.OctreeMode)
                 {
-                    setQuantizer(value.QuantizerType, value.OctreeMode);
+                    setQuantizer(value.QuantizerType, value.OctreeMode, value.DithererType);
                     _quantizedImage = null;
-                }  
+                }
+                else if (value.DithererType != _options.DithererType)
+                {
+                    _quantizer.SetDitherer(value.DithererType);
+                    _quantizedImage = null;
+                }
                 else if (value.MaxColors != _options.MaxColors ||
                     value.OperationOrder != Options.OperationOrder)
                 {
@@ -47,14 +53,14 @@ namespace Embroider
             _options = new EmbroiderOptions();
             _image = image;
             setReducedImage(_image, Options.StichSize);
-            setQuantizer(Options.QuantizerType, Options.OctreeMode);
+            setQuantizer(Options.QuantizerType, Options.OctreeMode, Options.DithererType);
         }
         public Embroider(Image<Lab, double> image, EmbroiderOptions options)
         {
             _options = options;
             _image = image;
             setReducedImage(_image, Options.StichSize);
-            setQuantizer(Options.QuantizerType, Options.OctreeMode);
+            setQuantizer(Options.QuantizerType, Options.OctreeMode, Options.DithererType);
         }
         public Image<Lab, double> GenerateImage()
         {
@@ -74,7 +80,7 @@ namespace Embroider
                     _quantizer.SetImage(_reducedImage);
                 }
                 _quantizer.GeneratePalette(Options.MaxColors);
-                _quantizedImage = _quantizer.GetQuantizedImage();
+                _quantizedImage = _quantizer.GetQuantizedImage(false);
             }
             return ImageProcessing.Stretch(_quantizedImage, Options.OutputStitchSize, Options.Net);
         }
@@ -97,27 +103,30 @@ namespace Embroider
         {
             _reducedImage = ImageProcessing.MeanReduce(image, size);
         }
-        private void setQuantizer(QuantizerType type, MergeMode octreeMode = MergeMode.LEAST_IMPORTANT)
+        private void setQuantizer(QuantizerType type, MergeMode octreeMode = MergeMode.LEAST_IMPORTANT, DithererType dithererType = DithererType.None)
         {
             switch (type)
             {
                 case QuantizerType.SimplePopularity:
-                    _quantizer = new SimplePopularityQuantizer(_reducedImage);
+                    _quantizer = new SimplePopularityQuantizer(_reducedImage, dithererType);
                     break;
                 case QuantizerType.Popularity:
-                    _quantizer = new PopularityQuantizer(_reducedImage);
+                    _quantizer = new PopularityQuantizer(_reducedImage, dithererType);
                     break;
                 case QuantizerType.MedianCut:
-                    _quantizer = new MedianCutQuantizer(_reducedImage);
+                    _quantizer = new MedianCutQuantizer(_reducedImage, dithererType);
                     break;
                 case QuantizerType.KMeans:
-                    _quantizer = new KMeansQuantizer(_reducedImage);
+                    _quantizer = new KMeansQuantizer(_reducedImage, dithererType);
                     break;
                 case QuantizerType.Octree:
-                    _quantizer = new OctreeQuantizer(_reducedImage, 8, octreeMode);
+                    _quantizer = new OctreeQuantizer(_reducedImage, 8, octreeMode, dithererType);
+                    break;
+                case QuantizerType.ModifiedMedianCut:
+                    _quantizer = new ModifiedMedianCutQuantizer(_reducedImage, 6, 0.85f, dithererType);
                     break;
                 default:
-                    _quantizer = new OctreeQuantizer(_reducedImage, 8);
+                    _quantizer = new ModifiedMedianCutQuantizer(_reducedImage, 6, 0.85f, dithererType);
                     break;
             }
         }
@@ -178,11 +187,12 @@ namespace Embroider
         /// MOST_IMPORTANT: Colors with most representation are merged first. <br/>
         /// </summary>
         public MergeMode OctreeMode { get; set; } = MergeMode.LEAST_IMPORTANT;
+        public DithererType DithererType { get; set; } = DithererType.None;
     }
 
     public enum QuantizerType
     {
-        SimplePopularity, Popularity, Octree, MedianCut, KMeans
+        SimplePopularity, Popularity, Octree, MedianCut, KMeans, ModifiedMedianCut
     }
 
     public enum OperationOrder

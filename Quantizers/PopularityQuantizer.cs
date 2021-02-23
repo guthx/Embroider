@@ -5,15 +5,14 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using Embroider.Ditherers;
 
 namespace Embroider.Quantizers
 {
     public class PopularityQuantizer : Quantizer
     {
-        public PopularityQuantizer(Image<Lab, double> image) : base(image)
-        {
+        public PopularityQuantizer(Image<Lab, double> image, DithererType dithererType) : base(image, dithererType) { }
 
-        }
         protected override void MakePalette(int paletteSize)
         {
             Palette.Clear();

@@ -293,18 +293,10 @@ namespace Embroider
             }
             return newImage;
         }
-        public static void ReplacePixelsWithDMC(Image<Lab, double> image)
+        public static void ReplacePixelsWithDMC(Image<Lab, double> image, bool useDithering = false)
         {
             var colorsCount = new Dictionary<DmcFloss, int>();
-            if (DmcFlosses == null)
-            {
-                DmcFlosses = new List<DmcFloss>();
-                using (var reader = new StreamReader(@"F:\Inne\ahri\dmc_lab.csv"))
-                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
-                {
-                    DmcFlosses = csv.GetRecords<DmcFloss>().ToList();
-                }
-            }
+            DmcFlosses = Flosses.Dmc;
 
             for(int h=0; h<image.Height; h++)
             {
@@ -321,7 +313,7 @@ namespace Embroider
                             Math.Pow(DmcFlosses[i].a - image[h, w].Y, 2) +
                             Math.Pow(DmcFlosses[i].b - image[h, w].Z, 2));
                         */
-                        deltaE[i] = Lab2.CompareCMC(color1, color2, 1, 1);
+                        deltaE[i] = Lab2.CompareDE74(color1, color2);
                         //deltaE[i] = Lab2.Compare(color1, color2);
                     }
                     var dmc = DmcFlosses[Array.IndexOf(deltaE, deltaE.Min())];
@@ -333,6 +325,85 @@ namespace Embroider
                     else
                     {
                         colorsCount.Add(dmc, 1);
+                    }
+                    if (useDithering)
+                    {
+                        var errorL = image[h, w].X - dmc.L;
+                        var errorA = image[h, w].Y - dmc.a;
+                        var errorB = image[h, w].Z - dmc.b;
+                        /*
+                        if (h < image.Height - 1)
+                        {
+                            if (w > 0)
+                            image[h + 1, w - 1] = new Lab(
+                                image[h + 1, w - 1].X + errorL * 3 / 16,
+                                image[h + 1, w - 1].Y + errorA * 3 / 16,
+                                image[h + 1, w - 1].Z + errorB * 3 / 16);
+                            image[h + 1, w] = new Lab(
+                                image[h + 1, w].X + errorL * 5 / 16,
+                                image[h + 1, w].Y + errorA * 5 / 16,
+                                image[h + 1, w].Z + errorB * 5 / 16);
+                            if (w < image.Width - 1)
+                            {
+                                image[h + 1, w + 1] = new Lab(
+                                image[h + 1, w + 1].X + errorL * 1 / 16,
+                                image[h + 1, w + 1].Y + errorA * 1 / 16,
+                                image[h + 1, w + 1].Z + errorB * 1 / 16);
+                            }
+                        }
+                        if (w < image.Width - 1)
+                        {
+                            image[h, w + 1] = new Lab(
+                            image[h, w + 1].X + errorL * 7 / 16,
+                            image[h, w + 1].Y + errorA * 7 / 16,
+                            image[h, w + 1].Z + errorB * 7 / 16);
+                        }
+                    }
+                        */
+                        if (w < image.Width - 1)
+                        {
+                            image[h, w + 1] = new Lab(
+                               image[h, w + 1].X + errorL * 1 / 8,
+                               image[h, w + 1].Y + errorA * 1 / 8,
+                               image[h, w + 1].Z + errorB * 1 / 8);
+                            if (h < image.Height - 1)
+                            {
+                                image[h + 1, w + 1] = new Lab(
+                                image[h + 1, w + 1].X + errorL * 1 / 8,
+                                image[h + 1, w + 1].Y + errorA * 1 / 8,
+                                image[h + 1, w + 1].Z + errorB * 1 / 8);
+                            }
+                        }
+                        if (w < image.Width - 2)
+                        {
+                            image[h, w + 2] = new Lab(
+                                image[h, w + 2].X + errorL * 1 / 8,
+                                image[h, w + 2].Y + errorA * 1 / 8,
+                                image[h, w + 2].Z + errorB * 1 / 8
+                                );
+                        }
+                        if (h < image.Height - 1)
+                        {
+                            if (w > 0)
+                                image[h + 1, w - 1] = new Lab(
+                                    image[h + 1, w - 1].X + errorL * 1 / 8,
+                                    image[h + 1, w - 1].Y + errorA * 1 / 8,
+                                    image[h + 1, w - 1].Z + errorB * 1 / 8
+                                    );
+                            image[h + 1, w] = new Lab(
+                                image[h + 1, w].X + errorL * 1 / 8,
+                                image[h + 1, w].Y + errorA * 1 / 8,
+                                image[h + 1, w].Z + errorB * 1 / 8
+                                );
+                        }
+                        if (h < image.Height - 2)
+                        {
+                            image[h + 2, w] = new Lab(
+                                image[h + 2, w].X + errorL * 1 / 8,
+                                image[h + 2, w].Y + errorA * 1 / 8,
+                                image[h + 2, w].Z + errorB * 1 / 8
+                                );
+                        }
                     }
                     image[h, w] = new Lab(dmc.L, dmc.a, dmc.b);
                 }
@@ -382,6 +453,14 @@ namespace Embroider
             L = _L;
             a = _a;
             b = _b;
+        }
+        
+        public static double CompareDE74(Lab2 color1, Lab2 color2)
+        {
+            return Math.Sqrt(
+                Math.Pow(color1.L - color2.L, 2) +
+                Math.Pow(color1.a - color2.a, 2) +
+                Math.Pow(color1.b - color2.b, 2));
         }
         public static double CompareDE2000(Lab2 color1, Lab2 color2)
         {

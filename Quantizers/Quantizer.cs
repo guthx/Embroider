@@ -1,4 +1,5 @@
-﻿using Emgu.CV;
+﻿using Embroider.Ditherers;
+using Emgu.CV;
 using Emgu.CV.Structure;
 using OfficeOpenXml;
 using System;
@@ -18,8 +19,9 @@ namespace Embroider.Quantizers
         protected Image<Lab, double> _image;
         public ConcurrentDictionary<DmcFloss, int> DmcFlossCount;
         public DmcFloss[,] DmcFlossMap;
+        protected Ditherer ditherer;
         
-        public Quantizer(Image<Lab, double> image)
+        public Quantizer(Image<Lab, double> image, DithererType dithererType = DithererType.None)
         {
             DmcFlossCount = new ConcurrentDictionary<DmcFloss, int>();
             DmcFlossMap = new DmcFloss[image.Height, image.Width];
@@ -27,7 +29,25 @@ namespace Embroider.Quantizers
             pixels = new List<Color>();
             Palette = new List<Color>();
             _image = image;
-            
+            SetDitherer(dithererType);
+        }
+        public void SetDitherer(DithererType type)
+        {
+            switch (type)
+            {
+                case DithererType.None:
+                    ditherer = new NoneDitherer(_image);
+                    break;
+                case DithererType.FloydSteinberg:
+                    ditherer = new FloydSteinbergDitherer(_image);
+                    break;
+                case DithererType.Atkinson:
+                    ditherer = new AtkinsonDitherer(_image);
+                    break;
+                default:
+                    ditherer = new NoneDitherer(_image);
+                    break;
+            }
         }
         public virtual void SetImage(Image<Lab, double> image)
         {
@@ -82,6 +102,7 @@ namespace Embroider.Quantizers
                 throw new Exception("Cannot quantize image with DMC colors without generating a DMC palette");
 
             var newImage = _image.Copy();
+            ditherer.SetImage(newImage);
             if (!useDmcColors)
             {
                 for (int h = 0; h < newImage.Height; h++)
@@ -96,7 +117,9 @@ namespace Embroider.Quantizers
                             deltaE[i] = Lab2.CompareCMC(color1, color2);
                         }
                         var color = Palette[Array.IndexOf(deltaE, deltaE.Min())];
+                        ditherer.Dither(h, w, color);
                         newImage[h, w] = new Lab(color.X, color.Y, color.Z);
+                        
                     }
                 }
             }
@@ -115,13 +138,13 @@ namespace Embroider.Quantizers
                             deltaE[i] = Lab2.CompareCMC(color1, color2);
                         }
                         var dmc = DmcPalette[Array.IndexOf(deltaE, deltaE.Min())];
+                        ditherer.Dither(h, w, new Color((int)dmc.L, (int)dmc.a, (int)dmc.b));
                         newImage[h, w] = new Lab(dmc.L, dmc.a, dmc.b);
                         DmcFlossCount.AddOrUpdate(dmc, 1, (dmc, count) => count + 1);
                         DmcFlossMap[h, w] = dmc;
                     }
                 }
             }
-            
             return newImage;
         }
 

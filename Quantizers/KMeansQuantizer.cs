@@ -1,4 +1,5 @@
-﻿using Emgu.CV;
+﻿using Embroider.Ditherers;
+using Emgu.CV;
 using Emgu.CV.Structure;
 using Microsoft.ML;
 using Microsoft.ML.Data;
@@ -10,7 +11,7 @@ namespace Embroider.Quantizers
 {
     public class KMeansQuantizer : Quantizer
     {
-        public KMeansQuantizer(Image<Lab, double> image) : base(image) { }
+        public KMeansQuantizer(Image<Lab, double> image, DithererType dithererType) : base(image, dithererType) { }
 
         protected override void MakePalette(int paletteSize)
         {
