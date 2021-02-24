@@ -9,7 +9,7 @@ namespace Embroider.Quantizers
 {
     public class MedianCutQuantizer : Quantizer
     {
-        public MedianCutQuantizer(Image<Lab, double> image, DithererType dithererType) : base(image, dithererType) { }
+        public MedianCutQuantizer(Image<Rgb, double> image, DithererType dithererType) : base(image, dithererType) { }
 
 
         private void split(List<Color> pixels, int depth)

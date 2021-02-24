@@ -16,12 +16,12 @@ namespace Embroider.Quantizers
         public List<Color> Palette;
         public List<DmcFloss> DmcPalette;
         protected List<Color> pixels;
-        protected Image<Lab, double> _image;
+        protected Image<Rgb, double> _image;
         public ConcurrentDictionary<DmcFloss, int> DmcFlossCount;
         public DmcFloss[,] DmcFlossMap;
         protected Ditherer ditherer;
         
-        public Quantizer(Image<Lab, double> image, DithererType dithererType = DithererType.None)
+        public Quantizer(Image<Rgb, double> image, DithererType dithererType = DithererType.None)
         {
             DmcFlossCount = new ConcurrentDictionary<DmcFloss, int>();
             DmcFlossMap = new DmcFloss[image.Height, image.Width];
@@ -49,7 +49,7 @@ namespace Embroider.Quantizers
                     break;
             }
         }
-        public virtual void SetImage(Image<Lab, double> image)
+        public virtual void SetImage(Image<Rgb, double> image)
         {
             _image = image;
             pixels.Clear();
@@ -58,22 +58,37 @@ namespace Embroider.Quantizers
             DmcFlossCount.Clear();
             DmcFlossMap = new DmcFloss[image.Height, image.Width];
         }
-        public virtual void GeneratePalette(int paletteSize, bool generateDmcPalette = true) 
+        public virtual void GeneratePalette<T>(int paletteSize, bool generateDmcPalette = true) where T : struct, Emgu.CV.IColor
         {
             pixels.Clear();
+            var cImage = _image.Convert<T, byte>();
             for (int h = 0; h < _image.Height; h++)
             {
                 for (int w = 0; w < _image.Width; w++)
                 {
-                    pixels.Add(new Color((int)_image[h, w].X, (int)_image[h, w].Y, (int)_image[h, w].Z));
+                    pixels.Add(new Color((int)cImage.Data[h, w, 0], (int)cImage.Data[h, w, 1], (int)cImage.Data[h, w, 2]));
                 }
             }
             Palette.Clear();
             DmcPalette.Clear();
             MakePalette(paletteSize);
+            //convert palette back to RGB
+            var convertHelper = new Image<T, byte>(1, Palette.Count);
+            for (int i = 0; i < Palette.Count; i++)
+            {
+                convertHelper.Data[i, 0, 0] = (byte)Palette[i].X;
+                convertHelper.Data[i, 0, 1] = (byte)Palette[i].Y;
+                convertHelper.Data[i, 0, 2] = (byte)Palette[i].Z;
+            }
+            var rgb = convertHelper.Convert<Rgb, byte>();
+            for (int i = 0; i < Palette.Count; i++)
+            {
+                Palette[i] = new Color((int)rgb.Data[i, 0, 0], (int)rgb.Data[i, 0, 1], (int)rgb.Data[i, 0, 2]);
+            }
             if (generateDmcPalette)
                 GenerateDmcPalette();
 
+            
         }
 
         protected abstract void MakePalette(int paletteSize);
@@ -84,10 +99,10 @@ namespace Embroider.Quantizers
             for (int i = 0; i < Palette.Count; i++)
             {
                 var deltaE = new double[dmcColors.Count];
-                var color1 = new Lab2(Palette[i].X / 2.55, Palette[i].Y - 128, Palette[i].Z - 128);
+                var color1 = new Lab2(Palette[i].X, Palette[i].Y, Palette[i].Z);
                 for (int j = 0; j < dmcColors.Count; j++)
                 {
-                    var color2 = new Lab2(dmcColors[j].L / 2.55, dmcColors[j].a - 128, dmcColors[j].b - 128);
+                    var color2 = new Lab2(dmcColors[j].Red, dmcColors[j].Green, dmcColors[j].Blue);
                     deltaE[j] = Lab2.CompareCMC(color1, color2);
                 }
                 var dmc = dmcColors[Array.IndexOf(deltaE, deltaE.Min())];
@@ -96,7 +111,7 @@ namespace Embroider.Quantizers
             }
         }
 
-        public virtual Image<Lab, double> GetQuantizedImage(bool useDmcColors = true)
+        public virtual Image<Rgb, double> GetQuantizedImage(bool useDmcColors = true)
         {
             if (useDmcColors && (DmcPalette.Count == 0))
                 throw new Exception("Cannot quantize image with DMC colors without generating a DMC palette");
@@ -110,15 +125,15 @@ namespace Embroider.Quantizers
                     for (int w = 0; w < newImage.Width; w++)
                     {
                         var deltaE = new double[Palette.Count];
-                        var color1 = new Lab2(newImage[h, w].X / 2.55, newImage[h, w].Y - 128, newImage[h, w].Z - 128);
+                        var color1 = new Lab2(newImage.Data[h, w, 0], newImage.Data[h, w, 1], newImage.Data[h, w, 2]);
                         for (int i = 0; i < Palette.Count; i++)
                         {
-                            var color2 = new Lab2(Palette[i].X / 2.55, Palette[i].Y - 128, Palette[i].Z - 128);
+                            var color2 = new Lab2(Palette[i].X, Palette[i].Y, Palette[i].Z);
                             deltaE[i] = Lab2.CompareCMC(color1, color2);
                         }
                         var color = Palette[Array.IndexOf(deltaE, deltaE.Min())];
                         ditherer.Dither(h, w, color);
-                        newImage[h, w] = new Lab(color.X, color.Y, color.Z);
+                        newImage[h, w] = new Rgb(color.X, color.Y, color.Z);
                         
                     }
                 }
@@ -131,15 +146,15 @@ namespace Embroider.Quantizers
                     for (int w = 0; w < newImage.Width; w++)
                     {
                         var deltaE = new double[DmcPalette.Count];
-                        var color1 = new Lab2(newImage[h, w].X / 2.55, newImage[h, w].Y - 128, newImage[h, w].Z - 128);
+                        var color1 = new Lab2(newImage.Data[h, w, 0], newImage.Data[h, w, 1], newImage.Data[h, w, 2]);
                         for (int i = 0; i < DmcPalette.Count; i++)
                         {
-                            var color2 = new Lab2(DmcPalette[i].L / 2.55, DmcPalette[i].a - 128, DmcPalette[i].b - 128);
+                            var color2 = new Lab2(DmcPalette[i].Red, DmcPalette[i].Green, DmcPalette[i].Blue);
                             deltaE[i] = Lab2.CompareCMC(color1, color2);
                         }
                         var dmc = DmcPalette[Array.IndexOf(deltaE, deltaE.Min())];
-                        ditherer.Dither(h, w, new Color((int)dmc.L, (int)dmc.a, (int)dmc.b));
-                        newImage[h, w] = new Lab(dmc.L, dmc.a, dmc.b);
+                        ditherer.Dither(h, w, new Color((int)dmc.Red, (int)dmc.Green, (int)dmc.Blue));
+                        newImage[h, w] = new Rgb(dmc.Red, dmc.Green, dmc.Blue);
                         DmcFlossCount.AddOrUpdate(dmc, 1, (dmc, count) => count + 1);
                         DmcFlossMap[h, w] = dmc;
                     }

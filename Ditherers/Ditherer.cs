@@ -15,7 +15,7 @@ namespace Embroider.Ditherers
     }
     public abstract class Ditherer
     {
-        private Image<Lab, double> _image;
+        private Image<Rgb, double> _image;
         private int _maxDif;
         protected abstract int[,] coefficientMatrix { get; }
         protected abstract int matrixPosH { get; }
@@ -35,21 +35,21 @@ namespace Embroider.Ditherers
             }
         }
 
-        public Ditherer(Image<Lab, double> image, int maxDif = 255)
+        public Ditherer(Image<Rgb, double> image, int maxDif = 255)
         {
             _image = image;
             _maxDif = maxDif;
         }
-        public void SetImage(Image<Lab, double> image)
+        public void SetImage(Image<Rgb, double> image)
         {
             _image = image;
         }
 
         public virtual void Dither(int h, int w, Color color)
         {
-            var errorX = _image[h, w].X - color.X;
-            var errorY = _image[h, w].Y - color.Y;
-            var errorZ = _image[h, w].Z - color.Z;
+            var errorX = _image.Data[h, w, 0] - color.X;
+            var errorY = _image.Data[h, w, 1] - color.Y;
+            var errorZ = _image.Data[h, w, 2] - color.Z;
 
             if (errorX > _maxDif)
                 errorX = _maxDif;
@@ -75,10 +75,10 @@ namespace Embroider.Ditherers
                         h2 >= 0 &&
                         w2 >= 0)
                     {
-                        _image[h2, w2] = new Lab(
-                            _image[h2, w2].X + errorX * coefficientMatrix[i, j] / coeficcientSum,
-                            _image[h2, w2].Y + errorY * coefficientMatrix[i, j] / coeficcientSum,
-                            _image[h2, w2].Z + errorZ * coefficientMatrix[i, j] / coeficcientSum
+                        _image[h2, w2] = new Rgb(
+                            _image.Data[h2, w2, 0] + errorX * coefficientMatrix[i, j] / coeficcientSum,
+                            _image.Data[h2, w2, 1] + errorY * coefficientMatrix[i, j] / coeficcientSum,
+                            _image.Data[h2, w2, 2] + errorZ * coefficientMatrix[i, j] / coeficcientSum
                             );
                     }
                 }

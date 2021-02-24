@@ -8,7 +8,7 @@ namespace Embroider.Ditherers
 {
     public class FloydSteinbergDitherer : Ditherer
     {
-        public FloydSteinbergDitherer(Image<Lab, double> image, int maxDiff = 10) : base(image, maxDiff)
+        public FloydSteinbergDitherer(Image<Rgb, double> image, int maxDiff = 255) : base(image, maxDiff)
         {
         }
         private int[,] _coeficcientMatrix = new int[,] {

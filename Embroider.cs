@@ -12,11 +12,11 @@ namespace Embroider
 {
     public class Embroider
     {
-        private Image<Lab, double> _image;
-        private Image<Lab, double> _reducedImage;
-        private Image<Lab, double> _reducedDmcImage;
+        private Image<Rgb, double> _image;
+        private Image<Rgb, double> _reducedImage;
+        private Image<Rgb, double> _reducedDmcImage;
         private Quantizer _quantizer;
-        private Image<Lab, double> _quantizedImage;
+        private Image<Rgb, double> _quantizedImage;
         private EmbroiderOptions _options;
         public EmbroiderOptions Options {
             get => _options;
@@ -41,28 +41,29 @@ namespace Embroider
                     _quantizedImage = null;
                 }
                 else if (value.MaxColors != _options.MaxColors ||
-                    value.OperationOrder != Options.OperationOrder)
+                    value.OperationOrder != Options.OperationOrder ||
+                    value.ColorSpace != Options.ColorSpace)
                 {
                     _quantizedImage = null;
                 }
                 _options = value;
             }
         }
-        public Embroider(Image<Lab, double> image)
+        public Embroider(Image<Rgb, double> image)
         {
             _options = new EmbroiderOptions();
             _image = image;
             setReducedImage(_image, Options.StichSize);
             setQuantizer(Options.QuantizerType, Options.OctreeMode, Options.DithererType);
         }
-        public Embroider(Image<Lab, double> image, EmbroiderOptions options)
+        public Embroider(Image<Rgb, double> image, EmbroiderOptions options)
         {
             _options = options;
             _image = image;
             setReducedImage(_image, Options.StichSize);
             setQuantizer(Options.QuantizerType, Options.OctreeMode, Options.DithererType);
         }
-        public Image<Lab, double> GenerateImage()
+        public Image<Rgb, double> GenerateImage()
         {
             if (_quantizedImage == null)
             {
@@ -79,7 +80,27 @@ namespace Embroider
                 {
                     _quantizer.SetImage(_reducedImage);
                 }
-                _quantizer.GeneratePalette(Options.MaxColors);
+                switch (Options.ColorSpace)
+                {
+                    case ColorSpace.Rgb:
+                        _quantizer.GeneratePalette<Rgb>(Options.MaxColors);
+                        break;
+                    case ColorSpace.Lab:
+                        _quantizer.GeneratePalette<Lab>(Options.MaxColors);
+                        break;
+                    case ColorSpace.Hsv:
+                        _quantizer.GeneratePalette<Hsv>(Options.MaxColors);
+                        break;
+                    case ColorSpace.Ycc:
+                        _quantizer.GeneratePalette<Ycc>(Options.MaxColors);
+                        break;
+                    case ColorSpace.Luv:
+                        _quantizer.GeneratePalette<Luv>(Options.MaxColors);
+                        break;
+                    default:
+                        _quantizer.GeneratePalette<Rgb>(Options.MaxColors);
+                        break;
+                };
                 _quantizedImage = _quantizer.GetQuantizedImage(false);
             }
             return ImageProcessing.Stretch(_quantizedImage, Options.OutputStitchSize, Options.Net);
@@ -99,7 +120,7 @@ namespace Embroider
                 Width = _quantizedImage.Width
             };
         }
-        private void setReducedImage(Image<Lab, double> image, int size)
+        private void setReducedImage(Image<Rgb, double> image, int size)
         {
             _reducedImage = ImageProcessing.MeanReduce(image, size);
         }
@@ -188,6 +209,7 @@ namespace Embroider
         /// </summary>
         public MergeMode OctreeMode { get; set; } = MergeMode.LEAST_IMPORTANT;
         public DithererType DithererType { get; set; } = DithererType.None;
+        public ColorSpace ColorSpace { get; set; } = ColorSpace.Rgb;
     }
 
     public enum QuantizerType
@@ -198,6 +220,11 @@ namespace Embroider
     public enum OperationOrder
     {
         QuantizeFirst, ReplacePixelsFirst
+    }
+
+    public enum ColorSpace
+    {
+        Rgb, Hsv, Lab, Ycc, Luv
     }
 
 

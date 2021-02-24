@@ -12,7 +12,7 @@ namespace Embroider.Quantizers
     {
         private int sigBits;
         private float fractionByPopulation;
-        public ModifiedMedianCutQuantizer(Image<Lab, double> image, int _sigBits = 6, float _fractionByPopulation = 0.85f, DithererType dithererType = DithererType.None) : base(image, dithererType)
+        public ModifiedMedianCutQuantizer(Image<Rgb, double> image, int _sigBits = 6, float _fractionByPopulation = 0.80f, DithererType dithererType = DithererType.None) : base(image, dithererType)
         {
             sigBits = _sigBits;
             fractionByPopulation = _fractionByPopulation;

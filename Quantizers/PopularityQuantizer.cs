@@ -11,7 +11,7 @@ namespace Embroider.Quantizers
 {
     public class PopularityQuantizer : Quantizer
     {
-        public PopularityQuantizer(Image<Lab, double> image, DithererType dithererType) : base(image, dithererType) { }
+        public PopularityQuantizer(Image<Rgb, double> image, DithererType dithererType) : base(image, dithererType) { }
 
         protected override void MakePalette(int paletteSize)
         {

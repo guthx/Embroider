@@ -20,11 +20,9 @@ namespace Embroider
     {
         static void Main(string[] args)
         {
-            
-            var ahri = new Image<Lab, double>(@"F:\Inne\ahri\ahri_new.jpg");
-            //ImageProcessing.MeanReduce(ahri, 4).Convert<Bgr, byte>().Save(@"F:\Inne\ahri\reduced.png");
-
-            
+            var ahri = new Image<Rgb, double>(@"F:\Inne\ahri\ahri_new.jpg");
+            ImageProcessing.MeanReduce(ahri, 4).Convert<Bgr, byte>().Save(@"F:\Inne\ahri\reduced.png");
+            var test = new Lab2(150, 231, 250);
             var embroider = new Embroider(ahri, new EmbroiderOptions
             {
                 OperationOrder = OperationOrder.QuantizeFirst,
@@ -32,7 +30,8 @@ namespace Embroider
                 MaxColors = 64,
                 QuantizerType = QuantizerType.ModifiedMedianCut,
                 OutputStitchSize = 4,
-                DithererType = Ditherers.DithererType.Atkinson
+                DithererType = Ditherers.DithererType.None,
+                ColorSpace = ColorSpace.Rgb
             });
             embroider.GenerateImage().Convert<Bgr, byte>().Save(@"F:\Inne\ahri\embroider.png");
             

@@ -9,7 +9,7 @@ namespace Embroider.Ditherers
 {
     public class NoneDitherer : Ditherer
     {
-        public NoneDitherer(Image<Lab, double> image, int maxDif = 255) : base(image, maxDif)
+        public NoneDitherer(Image<Rgb, double> image, int maxDif = 255) : base(image, maxDif)
         {
         }
 

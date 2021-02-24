@@ -15,7 +15,7 @@ namespace Embroider
     public static class ImageProcessing
     {
         public static List<DmcFloss> DmcFlosses;
-        public static void IncreaseContrast(Image<Lab, double> image, float contrast)
+        public static void IncreaseContrast(Image<Rgb, double> image, float contrast)
         {
             double sigmoid(double x)
             {
@@ -24,17 +24,17 @@ namespace Embroider
             for (int w = 0; w < image.Width; w++)
                 for (int h = 0; h < image.Height; h++)
                 {
-                    var newY = sigmoid(image[h, w].Y - 128) + 128;
-                    var newZ = sigmoid(image[h, w].Z - 128) + 128;
+                    var newY = sigmoid(image.Data[h, w, 1] - 128) + 128;
+                    var newZ = sigmoid(image.Data[h, w, 2] - 128) + 128;
 
-                    // var newY = (image[h, w].Y - 128) * contrast + image[h, w].Y;
-                    // var newZ = (image[h, w].Z - 128) * contrast + image[h, w].Z;
+                    // var newY = (image.Data[h, w, 1] - 128) * contrast + image.Data[h, w, 1];
+                    // var newZ = (image.Data[h, w, 2] - 128) * contrast + image.Data[h, w, 2];
 
-                    image[h, w] = new Lab(image[h, w].X, newY, newZ);
+                    image[h, w] = new Rgb(image.Data[h, w, 0], newY, newZ);
                 }
                     
         }
-        public static PixelValue[] GetPixelValues(Image<Lab, double> image)
+        public static PixelValue[] GetPixelValues(Image<Rgb, double> image)
         {
             var pixelValues = new PixelValue[image.Width * image.Height];
             int i = 0;
@@ -42,7 +42,7 @@ namespace Embroider
             {
                 for (int h = 0; h < image.Height; h++)
                 {
-                    pixelValues[i] = new PixelValue(image[h, w].X/2.55, (image[h, w].Y-128), (image[h, w].Z-128));
+                    pixelValues[i] = new PixelValue(image.Data[h, w, 0]/2.55, (image.Data[h, w, 1]-128), (image.Data[h, w, 2]-128));
                     i++;
                 }
             }
@@ -51,20 +51,18 @@ namespace Embroider
             
         }
 
-        public static Image<Lab, double> MeanReduce(Image<Lab, double> image, int pixelSize)
+        public static Image<Rgb, double> MeanReduce(Image<Rgb, double> image, int pixelSize)
         {
-            var newImage = new Image<Lab, double>((image.Width - 1) / pixelSize + 1, (image.Height - 1) / pixelSize + 1);
-            var newImageRGB = new Image<Bgr, byte>((image.Width - 1) / pixelSize + 1, (image.Height - 1) / pixelSize + 1);
-            var oldImageRGB = image.Convert<Bgr, byte>();
+            var newImage = new Image<Rgb, double>((image.Width - 1) / pixelSize + 1, (image.Height - 1) / pixelSize + 1);
             var pixelValues = new double[(image.Height - 1) / pixelSize + 1, (image.Width - 1) / pixelSize + 1, 3];
             var pixelCount = new int[(image.Height - 1) / pixelSize + 1, (image.Width - 1) / pixelSize + 1];
             for (int h=0; h<image.Height; h++)
             {
                 for(int w=0; w<image.Width; w++)
                 {
-                    pixelValues[h / pixelSize, w / pixelSize, 0] += oldImageRGB[h, w].Blue;
-                    pixelValues[h / pixelSize, w / pixelSize, 1] += oldImageRGB[h, w].Green;
-                    pixelValues[h / pixelSize, w / pixelSize, 2] += oldImageRGB[h, w].Red;
+                    pixelValues[h / pixelSize, w / pixelSize, 0] += image.Data[h, w, 0];
+                    pixelValues[h / pixelSize, w / pixelSize, 1] += image.Data[h, w, 1];
+                    pixelValues[h / pixelSize, w / pixelSize, 2] += image.Data[h, w, 2];
                     pixelCount[h / pixelSize, w / pixelSize]++;
                 }
             }
@@ -75,17 +73,17 @@ namespace Embroider
                     var x = pixelValues[h, w, 0] / pixelCount[h, w];
                     var y = pixelValues[h, w, 1] / pixelCount[h, w];
                     var z = pixelValues[h, w, 2] / pixelCount[h, w];
-                    newImageRGB[h, w] = new Bgr(x, y, z);
+                    newImage[h, w] = new Rgb(x, y, z);
                 }
             }
-            return newImageRGB.Convert<Lab, double>();
+            return newImage;
         }
 
-        public static Image<Lab, double> Stretch(Image<Lab, double> image, int sizeMultiplier, bool net = false)
+        public static Image<Rgb, double> Stretch(Image<Rgb, double> image, int sizeMultiplier, bool net = false)
         {
             if (!net)
             {
-                var newImage = new Image<Lab, double>(image.Width * sizeMultiplier, image.Height * sizeMultiplier);
+                var newImage = new Image<Rgb, double>(image.Width * sizeMultiplier, image.Height * sizeMultiplier);
                 for (int h=0; h<newImage.Height; h++)
                 {
                     for(int w=0; w<newImage.Width; w++)
@@ -97,14 +95,14 @@ namespace Embroider
             }
             else
             {
-                var newImage = new Image<Lab, double>(image.Width * sizeMultiplier + image.Width - 1, image.Height * sizeMultiplier + image.Height - 1);
+                var newImage = new Image<Rgb, double>(image.Width * sizeMultiplier + image.Width - 1, image.Height * sizeMultiplier + image.Height - 1);
                 for (int h=0; h<newImage.Height; h++)
                 {
                     for (int w=0; w<newImage.Width; w++)
                     {
                         if ( (h+1) % (sizeMultiplier+1) == 0 || (w+1) % (sizeMultiplier+1) == 0)
                         {
-                            newImage[h, w] = new Lab(120, 120, 120);
+                            newImage[h, w] = new Rgb(120, 120, 120);
                         }
                         else
                             newImage[h, w] = image[(h - (h+1) / (sizeMultiplier+1)) / sizeMultiplier, (w - (w+1) / (sizeMultiplier+1)) / sizeMultiplier];
@@ -140,7 +138,7 @@ namespace Embroider
             return predictor;
         }
 
-        public static Image<Lab, double> ClusterizeImage(PredictionEngine<PixelValue, PixelPrediciton> predictor, Image<Lab, double> image, int numOfClusters, bool useDmcColors = true)
+        public static Image<Rgb, double> ClusterizeImage(PredictionEngine<PixelValue, PixelPrediciton> predictor, Image<Rgb, double> image, int numOfClusters, bool useDmcColors = true)
         {
             var imageBgr = image.Convert<Bgr, byte>();
             var convertHelper = new Image<Bgr, byte>(1, 1);
@@ -151,14 +149,14 @@ namespace Embroider
             {
                 for (int h=0; h<image.Height; h++)
                 {
-                    var pixelVal = new PixelValue(image[h, w].X/2.55, (image[h, w].Y-128), (image[h, w].Z-128));
+                    var pixelVal = new PixelValue(image.Data[h, w, 0]/2.55, (image.Data[h, w, 1]-128), (image.Data[h, w, 2]-128));
                     var cluster = predictor.Predict(pixelVal);
                     pixelClusters[h, w] = cluster.Cluster - 1;
                     pixelCount[cluster.Cluster - 1]++;
                     
-                    clusterMean[cluster.Cluster - 1, 0] += image[h, w].X;
-                    clusterMean[cluster.Cluster - 1, 1] += image[h, w].Y;
-                    clusterMean[cluster.Cluster - 1, 2] += image[h, w].Z;
+                    clusterMean[cluster.Cluster - 1, 0] += image.Data[h, w, 0];
+                    clusterMean[cluster.Cluster - 1, 1] += image.Data[h, w, 1];
+                    clusterMean[cluster.Cluster - 1, 2] += image.Data[h, w, 2];
                     /*
                     clusterMean[cluster.Cluster - 1, 0] += imageBgr[h, w].Blue * imageBgr[h, w].Blue;
                     clusterMean[cluster.Cluster - 1, 1] += imageBgr[h, w].Green * imageBgr[h, w].Green;
@@ -219,7 +217,7 @@ namespace Embroider
                 }
             }
 
-            var newImage = new Image<Lab, double>(image.Width, image.Height);
+            var newImage = new Image<Rgb, double>(image.Width, image.Height);
             
             for (int w=0; w<image.Width; w++)
             {
@@ -228,13 +226,13 @@ namespace Embroider
                     double x = clusterMean[pixelClusters[h, w], 0];
                     double y = clusterMean[pixelClusters[h, w], 1];
                     double z = clusterMean[pixelClusters[h, w], 2];
-                    newImage[h, w] = new Lab(x, y, z);
+                    newImage[h, w] = new Rgb(x, y, z);
                 }
             }
             return newImage;
         }
 
-        public static Image<Lab, double> ClusterizeImage2(PredictionEngine<PixelValue, PixelPrediciton> predictor, Image<Lab, double> image, int numOfClusters)
+        public static Image<Rgb, double> ClusterizeImage2(PredictionEngine<PixelValue, PixelPrediciton> predictor, Image<Rgb, double> image, int numOfClusters)
         {
             if (DmcFlosses == null)
             {
@@ -255,16 +253,16 @@ namespace Embroider
             {
                 for (int h = 0; h < image.Height; h++)
                 {
-                    var pixelVal = new PixelValue(image[h, w].X / 2.55, image[h, w].Y - 128, image[h, w].Z - 128);
+                    var pixelVal = new PixelValue(image.Data[h, w, 0] / 2.55, image.Data[h, w, 1] - 128, image.Data[h, w, 2] - 128);
                     var cluster = predictor.Predict(pixelVal);
                     pixelClusters[h, w] = cluster.Cluster - 1;
                     var deltaE = new double[DmcFlosses.Count];
                     for (int i = 0; i < DmcFlosses.Count; i++)
                     {
                         deltaE[i] = Math.Sqrt(
-                            Math.Pow((DmcFlosses[i].L / 2.55) - (image[h, w].X / 2.55), 2) +
-                            Math.Pow(DmcFlosses[i].a - image[h, w].Y, 2) +
-                            Math.Pow(DmcFlosses[i].b - image[h, w].Z, 2));
+                            Math.Pow((DmcFlosses[i].L / 2.55) - (image.Data[h, w, 0] / 2.55), 2) +
+                            Math.Pow(DmcFlosses[i].a - image.Data[h, w, 1], 2) +
+                            Math.Pow(DmcFlosses[i].b - image.Data[h, w, 2], 2));
                     }
                     var index = Array.IndexOf(deltaE, deltaE.Min());
                     clusterDmcCount[cluster.Cluster - 1][index]++;
@@ -279,7 +277,7 @@ namespace Embroider
                 clusterColors[i] = DmcFlosses[index];
             }
 
-            var newImage = new Image<Lab, double>(image.Width, image.Height);
+            var newImage = new Image<Rgb, double>(image.Width, image.Height);
 
             for (int w = 0; w < image.Width; w++)
             {
@@ -288,12 +286,12 @@ namespace Embroider
                     double x = clusterColors[pixelClusters[h, w]].L;
                     double y = clusterColors[pixelClusters[h, w]].a;
                     double z = clusterColors[pixelClusters[h, w]].b;
-                    newImage[h, w] = new Lab(x, y, z);
+                    newImage[h, w] = new Rgb(x, y, z);
                 }
             }
             return newImage;
         }
-        public static void ReplacePixelsWithDMC(Image<Lab, double> image, bool useDithering = false)
+        public static void ReplacePixelsWithDMC(Image<Rgb, double> image, bool useDithering = false)
         {
             var colorsCount = new Dictionary<DmcFloss, int>();
             DmcFlosses = Flosses.Dmc;
@@ -305,13 +303,13 @@ namespace Embroider
                     var deltaE = new double[DmcFlosses.Count];
                     for (int i = 0; i < DmcFlosses.Count; i++)
                     {
-                        var color1 = new Lab2(DmcFlosses[i].L / 2.55, (DmcFlosses[i].a - 128), (DmcFlosses[i].b - 128));
-                        var color2 = new Lab2(image[h, w]);
+                        var color1 = new Lab2(DmcFlosses[i].Red, DmcFlosses[i].Green, DmcFlosses[i].Blue);
+                        var color2 = new Lab2(image.Data[h, w, 0], image.Data[h, w, 1], image.Data[h, w, 2]);
                         /*
                         deltaE[i] = Math.Sqrt(
-                            Math.Pow((DmcFlosses[i].L) - (image[h, w].X), 2) +
-                            Math.Pow(DmcFlosses[i].a - image[h, w].Y, 2) +
-                            Math.Pow(DmcFlosses[i].b - image[h, w].Z, 2));
+                            Math.Pow((DmcFlosses[i].L) - (image.Data[h, w, 0]), 2) +
+                            Math.Pow(DmcFlosses[i].a - image.Data[h, w, 1], 2) +
+                            Math.Pow(DmcFlosses[i].b - image.Data[h, w, 2], 2));
                         */
                         deltaE[i] = Lab2.CompareDE74(color1, color2);
                         //deltaE[i] = Lab2.Compare(color1, color2);
@@ -328,84 +326,84 @@ namespace Embroider
                     }
                     if (useDithering)
                     {
-                        var errorL = image[h, w].X - dmc.L;
-                        var errorA = image[h, w].Y - dmc.a;
-                        var errorB = image[h, w].Z - dmc.b;
+                        var errorR = image.Data[h, w, 0] - dmc.Red;
+                        var errorG = image.Data[h, w, 1] - dmc.Green;
+                        var errorB = image.Data[h, w, 2] - dmc.Blue;
                         /*
                         if (h < image.Height - 1)
                         {
                             if (w > 0)
-                            image[h + 1, w - 1] = new Lab(
-                                image[h + 1, w - 1].X + errorL * 3 / 16,
-                                image[h + 1, w - 1].Y + errorA * 3 / 16,
-                                image[h + 1, w - 1].Z + errorB * 3 / 16);
-                            image[h + 1, w] = new Lab(
-                                image[h + 1, w].X + errorL * 5 / 16,
-                                image[h + 1, w].Y + errorA * 5 / 16,
-                                image[h + 1, w].Z + errorB * 5 / 16);
+                            image[h + 1, w - 1] = new Rgb(
+                                image.Data[h + 1,  w - 1, 0] + errorL * 3 / 16,
+                                image.Data[h + 1,  w - 1, 1] + errorA * 3 / 16,
+                                image.Data[h + 1,  w - 1, 2] + errorB * 3 / 16);
+                            image[h + 1, w] = new Rgb(
+                                image.Data[h + 1,  w, 0] + errorL * 5 / 16,
+                                image.Data[h + 1,  w, 1] + errorA * 5 / 16,
+                                image.Data[h + 1,  w, 2] + errorB * 5 / 16);
                             if (w < image.Width - 1)
                             {
-                                image[h + 1, w + 1] = new Lab(
-                                image[h + 1, w + 1].X + errorL * 1 / 16,
-                                image[h + 1, w + 1].Y + errorA * 1 / 16,
-                                image[h + 1, w + 1].Z + errorB * 1 / 16);
+                                image[h + 1, w + 1] = new Rgb(
+                                image.Data[h + 1,  w + 1, 0] + errorL * 1 / 16,
+                                image.Data[h + 1,  w + 1, 1] + errorA * 1 / 16,
+                                image.Data[h + 1,  w + 1, 2] + errorB * 1 / 16);
                             }
                         }
                         if (w < image.Width - 1)
                         {
-                            image[h, w + 1] = new Lab(
-                            image[h, w + 1].X + errorL * 7 / 16,
-                            image[h, w + 1].Y + errorA * 7 / 16,
-                            image[h, w + 1].Z + errorB * 7 / 16);
+                            image[h, w + 1] = new Rgb(
+                            image.Data[h,  w + 1, 0] + errorL * 7 / 16,
+                            image.Data[h,  w + 1, 1] + errorA * 7 / 16,
+                            image.Data[h,  w + 1, 2] + errorB * 7 / 16);
                         }
                     }
                         */
                         if (w < image.Width - 1)
                         {
-                            image[h, w + 1] = new Lab(
-                               image[h, w + 1].X + errorL * 1 / 8,
-                               image[h, w + 1].Y + errorA * 1 / 8,
-                               image[h, w + 1].Z + errorB * 1 / 8);
+                            image[h, w + 1] = new Rgb(
+                               image.Data[h,  w + 1, 0] + errorR * 1 / 8,
+                               image.Data[h,  w + 1, 1] + errorG * 1 / 8,
+                               image.Data[h,  w + 1, 2] + errorB * 1 / 8);
                             if (h < image.Height - 1)
                             {
-                                image[h + 1, w + 1] = new Lab(
-                                image[h + 1, w + 1].X + errorL * 1 / 8,
-                                image[h + 1, w + 1].Y + errorA * 1 / 8,
-                                image[h + 1, w + 1].Z + errorB * 1 / 8);
+                                image[h + 1, w + 1] = new Rgb(
+                                image.Data[h + 1,  w + 1, 0] + errorR * 1 / 8,
+                                image.Data[h + 1,  w + 1, 1] + errorG * 1 / 8,
+                                image.Data[h + 1,  w + 1, 2] + errorB * 1 / 8);
                             }
                         }
                         if (w < image.Width - 2)
                         {
-                            image[h, w + 2] = new Lab(
-                                image[h, w + 2].X + errorL * 1 / 8,
-                                image[h, w + 2].Y + errorA * 1 / 8,
-                                image[h, w + 2].Z + errorB * 1 / 8
+                            image[h, w + 2] = new Rgb(
+                                image.Data[h,  w + 2, 0] + errorR * 1 / 8,
+                                image.Data[h,  w + 2, 1] + errorG * 1 / 8,
+                                image.Data[h,  w + 2, 2] + errorB * 1 / 8
                                 );
                         }
                         if (h < image.Height - 1)
                         {
                             if (w > 0)
-                                image[h + 1, w - 1] = new Lab(
-                                    image[h + 1, w - 1].X + errorL * 1 / 8,
-                                    image[h + 1, w - 1].Y + errorA * 1 / 8,
-                                    image[h + 1, w - 1].Z + errorB * 1 / 8
+                                image[h + 1, w - 1] = new Rgb(
+                                    image.Data[h + 1,  w - 1, 0] + errorR * 1 / 8,
+                                    image.Data[h + 1,  w - 1, 1] + errorG * 1 / 8,
+                                    image.Data[h + 1,  w - 1, 2] + errorB * 1 / 8
                                     );
-                            image[h + 1, w] = new Lab(
-                                image[h + 1, w].X + errorL * 1 / 8,
-                                image[h + 1, w].Y + errorA * 1 / 8,
-                                image[h + 1, w].Z + errorB * 1 / 8
+                            image[h + 1, w] = new Rgb(
+                                image.Data[h + 1,  w, 0] + errorR * 1 / 8,
+                                image.Data[h + 1,  w, 1] + errorG * 1 / 8,
+                                image.Data[h + 1,  w, 2] + errorB * 1 / 8
                                 );
                         }
                         if (h < image.Height - 2)
                         {
-                            image[h + 2, w] = new Lab(
-                                image[h + 2, w].X + errorL * 1 / 8,
-                                image[h + 2, w].Y + errorA * 1 / 8,
-                                image[h + 2, w].Z + errorB * 1 / 8
+                            image[h + 2, w] = new Rgb(
+                                image.Data[h + 2,  w, 0] + errorR * 1 / 8,
+                                image.Data[h + 2,  w, 1] + errorG * 1 / 8,
+                                image.Data[h + 2,  w, 2] + errorB * 1 / 8
                                 );
                         }
                     }
-                    image[h, w] = new Lab(dmc.L, dmc.a, dmc.b);
+                    image[h, w] = new Rgb(dmc.L, dmc.a, dmc.b);
                 }
             }
         }
@@ -448,13 +446,30 @@ namespace Embroider
             b = (lab.Z - 128);
         }
 
-        public Lab2(double _L, double _a, double _b)
+        public Lab2(double R, double G, double B)
         {
-            L = _L;
-            a = _a;
-            b = _b;
+            R = R / 255;
+            G = G / 255;
+            B = B / 255;
+
+            R = (R > 0.04045) ? Math.Pow((R + 0.055) / 1.055, 2.4) : R / 12.92;
+            G = (G > 0.04045) ? Math.Pow((G + 0.055) / 1.055, 2.4) : G / 12.92;
+            B = (B > 0.04045) ? Math.Pow((B + 0.055) / 1.055, 2.4) : B / 12.92;
+
+            var x = (R * 0.4124 + G * 0.3576 + B * 0.1805) / 0.95047;
+            var y = (R * 0.2126 + G * 0.7152 + B * 0.0722) / 1.00000;
+            var z = (R * 0.0193 + G * 0.1192 + B * 0.9505) / 1.08883;
+            // 7.787
+            // 903.3
+            x = (x > 0.008856) ? Math.Pow(x, 1.0 / 3) : (7.787 * x) + 16.0 / 116;
+            y = (y > 0.008856) ? Math.Pow(y, 1.0 / 3) : (7.787 * y) + 16.0 / 116;
+            z = (z > 0.008856) ? Math.Pow(z, 1.0 / 3) : (7.787 * z) + 16.0 / 116;
+
+            L = (116 * y) - 16;
+            a = 500 * (x - y);
+            b = 200 * (y - z);
         }
-        
+
         public static double CompareDE74(Lab2 color1, Lab2 color2)
         {
             return Math.Sqrt(

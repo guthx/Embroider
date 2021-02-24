@@ -19,7 +19,7 @@ namespace Embroider.Quantizers
         public int MaxDepth { get; }
         private MergeMode _mergeMode;
 
-        public OctreeQuantizer(Image<Lab, double> image, int maxDepth, MergeMode mergeMode = MergeMode.LEAST_IMPORTANT, DithererType dithererType = DithererType.None) : base(image, dithererType)
+        public OctreeQuantizer(Image<Rgb, double> image, int maxDepth, MergeMode mergeMode = MergeMode.LEAST_IMPORTANT, DithererType dithererType = DithererType.None) : base(image, dithererType)
         {
             MaxDepth = maxDepth;
             _mergeMode = mergeMode;
