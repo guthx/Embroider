@@ -8,6 +8,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using Embroider.Quantizers;
+using static Embroider.Enums;
 
 namespace Embroider
 {
@@ -21,17 +22,26 @@ namespace Embroider
         static void Main(string[] args)
         {
             var ahri = new Image<Rgb, double>(@"F:\Inne\ahri\ahri_new.jpg");
+            /*
+            ahri = ImageProcessing.MeanReduce(ahri, 4);
+            ImageProcessing.ReplacePixelsWithDMC(ahri);
+            ahri = ImageProcessing.Stretch(ahri, 4);
+            ahri.Convert<Bgr, byte>().Save(@"F:\Inne\ahri\kupa.png");
+            
+            ahri.Convert<Rgb, byte>().Save(@"F:\Inne\ahri\testconv.png");
             ImageProcessing.MeanReduce(ahri, 4).Convert<Bgr, byte>().Save(@"F:\Inne\ahri\reduced.png");
             var test = new Lab2(150, 231, 250);
+            */
             var embroider = new Embroider(ahri, new EmbroiderOptions
             {
                 OperationOrder = OperationOrder.QuantizeFirst,
                 StichSize = 4,
-                MaxColors = 64,
+                MaxColors = 80,
                 QuantizerType = QuantizerType.ModifiedMedianCut,
                 OutputStitchSize = 4,
-                DithererType = Ditherers.DithererType.None,
-                ColorSpace = ColorSpace.Rgb
+                DithererType = DithererType.Atkinson,
+                ColorSpace = ColorSpace.Rgb,
+                ColorComparerType = ColorComparerType.WeightedEuclideanDistance
             });
             embroider.GenerateImage().Convert<Bgr, byte>().Save(@"F:\Inne\ahri\embroider.png");
             

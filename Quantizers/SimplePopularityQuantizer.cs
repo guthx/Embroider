@@ -6,12 +6,13 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using Embroider.Ditherers;
+using static Embroider.Enums;
 
 namespace Embroider.Quantizers
 {
     public class SimplePopularityQuantizer : Quantizer
     {
-        public SimplePopularityQuantizer(Image<Rgb, double> image, DithererType dithererType) : base(image, dithererType) { }
+        public SimplePopularityQuantizer(Image<Rgb, double> image, DithererType dithererType, ColorComparerType colorComparerType) : base(image, dithererType, colorComparerType) { }
         protected override void MakePalette(int paletteSize)
         {
             Palette.Clear();

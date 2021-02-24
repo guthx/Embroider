@@ -4,12 +4,13 @@ using Emgu.CV.Structure;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using static Embroider.Enums;
 
 namespace Embroider.Quantizers
 {
     public class MedianCutQuantizer : Quantizer
     {
-        public MedianCutQuantizer(Image<Rgb, double> image, DithererType dithererType) : base(image, dithererType) { }
+        public MedianCutQuantizer(Image<Rgb, double> image, DithererType dithererType, ColorComparerType colorComparerType) : base(image, dithererType, colorComparerType) { }
 
 
         private void split(List<Color> pixels, int depth)
@@ -20,7 +21,7 @@ namespace Embroider.Quantizers
                 return;
             }
 
-            int xMax = 0, xMin = 255, yMax = 0, yMin = 255, zMax = 0, zMin = 255;
+            double xMax = 0, xMin = 255, yMax = 0, yMin = 255, zMax = 0, zMin = 255;
             foreach(var pixel in pixels)
             {
                 if (pixel.X > xMax)
@@ -37,9 +38,9 @@ namespace Embroider.Quantizers
                     zMin = pixel.Z;
             }
 
-            int xRange = xMax - xMin;
-            int yRange = yMax - yMin;
-            int zRange = zMax - zMin;
+            double xRange = xMax - xMin;
+            double yRange = yMax - yMin;
+            double zRange = zMax - zMin;
 
             if (xRange >= yRange && xRange >= zRange)
             {

@@ -6,12 +6,13 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using Embroider.Ditherers;
+using static Embroider.Enums;
 
 namespace Embroider.Quantizers
 {
     public class PopularityQuantizer : Quantizer
     {
-        public PopularityQuantizer(Image<Rgb, double> image, DithererType dithererType) : base(image, dithererType) { }
+        public PopularityQuantizer(Image<Rgb, double> image, DithererType dithererType, ColorComparerType colorComparerType) : base(image, dithererType, colorComparerType) { }
 
         protected override void MakePalette(int paletteSize)
         {
@@ -41,9 +42,9 @@ namespace Embroider.Quantizers
 
         private static int getColorIndex(Color color)
         {
-            int x = color.X >> 2;
-            int y = color.Y >> 2;
-            int z = color.Z >> 2;
+            int x = (int)color.X >> 2;
+            int y = (int)color.Y >> 2;
+            int z = (int)color.Z >> 2;
             return (x << 12) + (y << 6) + z;
         }
     }

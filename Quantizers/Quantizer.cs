@@ -1,4 +1,5 @@
-﻿using Embroider.Ditherers;
+﻿using Embroider.Comparers;
+using Embroider.Ditherers;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using OfficeOpenXml;
@@ -8,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using static Embroider.Enums;
 
 namespace Embroider.Quantizers
 {
@@ -20,8 +22,9 @@ namespace Embroider.Quantizers
         public ConcurrentDictionary<DmcFloss, int> DmcFlossCount;
         public DmcFloss[,] DmcFlossMap;
         protected Ditherer ditherer;
+        protected ColorComparer colorComparer;
         
-        public Quantizer(Image<Rgb, double> image, DithererType dithererType = DithererType.None)
+        public Quantizer(Image<Rgb, double> image, DithererType dithererType = DithererType.None, ColorComparerType colorComparer = ColorComparerType.DE76)
         {
             DmcFlossCount = new ConcurrentDictionary<DmcFloss, int>();
             DmcFlossMap = new DmcFloss[image.Height, image.Width];
@@ -30,6 +33,7 @@ namespace Embroider.Quantizers
             Palette = new List<Color>();
             _image = image;
             SetDitherer(dithererType);
+            SetColorComparer(colorComparer);
         }
         public void SetDitherer(DithererType type)
         {
@@ -46,6 +50,30 @@ namespace Embroider.Quantizers
                     break;
                 default:
                     ditherer = new NoneDitherer(_image);
+                    break;
+            }
+        }
+        public void SetColorComparer(ColorComparerType type)
+        {
+            switch (type)
+            {
+                case ColorComparerType.DE76:
+                    colorComparer = new DE76Comparer();
+                    break;
+                case ColorComparerType.DE2000:
+                    colorComparer = new DE2000Comparer();
+                    break;
+                case ColorComparerType.CMC:
+                    colorComparer = new CMCComparer();
+                    break;
+                case ColorComparerType.EuclideanDistance:
+                    colorComparer = new EuclideanDistanceComparer();
+                    break;
+                case ColorComparerType.WeightedEuclideanDistance:
+                    colorComparer = new WeightedEuclideanDistanceComparer();
+                    break;
+                default:
+                    colorComparer = new DE76Comparer();
                     break;
             }
         }

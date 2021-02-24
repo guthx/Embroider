@@ -311,7 +311,7 @@ namespace Embroider
                             Math.Pow(DmcFlosses[i].a - image.Data[h, w, 1], 2) +
                             Math.Pow(DmcFlosses[i].b - image.Data[h, w, 2], 2));
                         */
-                        deltaE[i] = Lab2.CompareDE74(color1, color2);
+                        deltaE[i] = Lab2.CompareCMC(color1, color2);
                         //deltaE[i] = Lab2.Compare(color1, color2);
                     }
                     var dmc = DmcFlosses[Array.IndexOf(deltaE, deltaE.Min())];
@@ -403,7 +403,7 @@ namespace Embroider
                                 );
                         }
                     }
-                    image[h, w] = new Rgb(dmc.L, dmc.a, dmc.b);
+                    image[h, w] = new Rgb(dmc.Red, dmc.Green, dmc.Blue);
                 }
             }
         }

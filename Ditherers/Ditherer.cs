@@ -7,12 +7,6 @@ using System.Text;
 
 namespace Embroider.Ditherers
 {
-    public enum DithererType
-    {
-        None,
-        FloydSteinberg,
-        Atkinson
-    }
     public abstract class Ditherer
     {
         private Image<Rgb, double> _image;

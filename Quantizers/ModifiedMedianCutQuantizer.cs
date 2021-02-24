@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using C5;
 using Embroider.Ditherers;
+using static Embroider.Enums;
 
 namespace Embroider.Quantizers
 {
@@ -12,7 +13,10 @@ namespace Embroider.Quantizers
     {
         private int sigBits;
         private float fractionByPopulation;
-        public ModifiedMedianCutQuantizer(Image<Rgb, double> image, int _sigBits = 6, float _fractionByPopulation = 0.80f, DithererType dithererType = DithererType.None) : base(image, dithererType)
+        public ModifiedMedianCutQuantizer(Image<Rgb, double> image, int _sigBits = 6, 
+            float _fractionByPopulation = 0.80f, 
+            DithererType dithererType = DithererType.None, 
+            ColorComparerType colorComparerType = ColorComparerType.DE76) : base(image, dithererType, colorComparerType)
         {
             sigBits = _sigBits;
             fractionByPopulation = _fractionByPopulation;
@@ -266,9 +270,9 @@ namespace Embroider.Quantizers
 
         private static int getColorIndex(Color color, int sigBits)
         {
-            int x = color.X >> (8 - sigBits);
-            int y = color.Y >> (8 - sigBits);
-            int z = color.Z >> (8 - sigBits);
+            int x = (int)color.X >> (8 - sigBits);
+            int y = (int)color.Y >> (8 - sigBits);
+            int z = (int)color.Z >> (8 - sigBits);
             return (x << (sigBits*2)) + (y << sigBits) + z;
         }
 

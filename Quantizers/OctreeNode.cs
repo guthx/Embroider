@@ -109,11 +109,11 @@ namespace Embroider.Quantizers
         {
             int index = 0;
             int mask = 0b10000000 >> level;
-            if ((color.X & mask) != 0)
+            if (((int)color.X & mask) != 0)
                 index |= 0b100;
-            if ((color.Y & mask) != 0)
+            if (((int)color.Y & mask) != 0)
                 index |= 0b010;
-            if ((color.Z & mask) != 0)
+            if (((int)color.Z & mask) != 0)
                 index |= 0b001;
             return index;
         }

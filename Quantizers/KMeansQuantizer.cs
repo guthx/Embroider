@@ -6,12 +6,13 @@ using Microsoft.ML.Data;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using static Embroider.Enums;
 
 namespace Embroider.Quantizers
 {
     public class KMeansQuantizer : Quantizer
     {
-        public KMeansQuantizer(Image<Rgb, double> image, DithererType dithererType) : base(image, dithererType) { }
+        public KMeansQuantizer(Image<Rgb, double> image, DithererType dithererType, ColorComparerType colorComparerType) : base(image, dithererType, colorComparerType) { }
 
         protected override void MakePalette(int paletteSize)
         {

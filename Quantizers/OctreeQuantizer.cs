@@ -5,13 +5,11 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using Embroider.Ditherers;
+using static Embroider.Enums;
 
 namespace Embroider.Quantizers
 {
-    public enum MergeMode
-    {
-        LEAST_IMPORTANT, MOST_IMPORTANT
-    }
+    
     public class OctreeQuantizer : Quantizer
     {
         public OctreeNode Root;
@@ -19,7 +17,11 @@ namespace Embroider.Quantizers
         public int MaxDepth { get; }
         private MergeMode _mergeMode;
 
-        public OctreeQuantizer(Image<Rgb, double> image, int maxDepth, MergeMode mergeMode = MergeMode.LEAST_IMPORTANT, DithererType dithererType = DithererType.None) : base(image, dithererType)
+        public OctreeQuantizer(Image<Rgb, double> image, 
+            int maxDepth, 
+            MergeMode mergeMode = MergeMode.LEAST_IMPORTANT, 
+            DithererType dithererType = DithererType.None, 
+            ColorComparerType colorComparerType = ColorComparerType.DE76) : base(image, dithererType, colorComparerType)
         {
             MaxDepth = maxDepth;
             _mergeMode = mergeMode;
