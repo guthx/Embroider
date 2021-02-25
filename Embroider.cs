@@ -74,7 +74,7 @@ namespace Embroider
                     if (_reducedDmcImage == null)
                     {
                         _reducedDmcImage = _reducedImage.Copy();
-                        ImageProcessing.ReplacePixelsWithDMC(_reducedDmcImage);
+                        ImageProcessing.ReplacePixelsWithDMC(_reducedDmcImage, _quantizer.colorComparer, _quantizer.ditherer);
                     }
                     _quantizer.SetImage(_reducedDmcImage);
                 }

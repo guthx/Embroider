@@ -36,8 +36,8 @@ namespace Embroider
             {
                 OperationOrder = OperationOrder.QuantizeFirst,
                 StichSize = 4,
-                MaxColors = 80,
-                QuantizerType = QuantizerType.ModifiedMedianCut,
+                MaxColors = 50,
+                QuantizerType = QuantizerType.KMeans,
                 OutputStitchSize = 4,
                 DithererType = DithererType.Atkinson,
                 ColorSpace = ColorSpace.Rgb,

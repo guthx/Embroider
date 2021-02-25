@@ -21,8 +21,8 @@ namespace Embroider.Quantizers
         protected Image<Rgb, double> _image;
         public ConcurrentDictionary<DmcFloss, int> DmcFlossCount;
         public DmcFloss[,] DmcFlossMap;
-        protected Ditherer ditherer;
-        protected ColorComparer colorComparer;
+        public Ditherer ditherer;
+        public ColorComparer colorComparer;
         
         public Quantizer(Image<Rgb, double> image, DithererType dithererType = DithererType.None, ColorComparerType colorComparer = ColorComparerType.DE76)
         {
@@ -127,11 +127,11 @@ namespace Embroider.Quantizers
             for (int i = 0; i < Palette.Count; i++)
             {
                 var deltaE = new double[dmcColors.Count];
-                var color1 = new Lab2(Palette[i].X, Palette[i].Y, Palette[i].Z);
+                var color1 = new Color(Palette[i].X, Palette[i].Y, Palette[i].Z);
                 for (int j = 0; j < dmcColors.Count; j++)
                 {
-                    var color2 = new Lab2(dmcColors[j].Red, dmcColors[j].Green, dmcColors[j].Blue);
-                    deltaE[j] = Lab2.CompareCMC(color1, color2);
+                    var color2 = new Color(dmcColors[j].Red, dmcColors[j].Green, dmcColors[j].Blue);
+                    deltaE[j] = colorComparer.Compare(color1, color2);
                 }
                 var dmc = dmcColors[Array.IndexOf(deltaE, deltaE.Min())];
                 if (!DmcPalette.Contains(dmc))
@@ -153,11 +153,11 @@ namespace Embroider.Quantizers
                     for (int w = 0; w < newImage.Width; w++)
                     {
                         var deltaE = new double[Palette.Count];
-                        var color1 = new Lab2(newImage.Data[h, w, 0], newImage.Data[h, w, 1], newImage.Data[h, w, 2]);
+                        var color1 = new Color(newImage.Data[h, w, 0], newImage.Data[h, w, 1], newImage.Data[h, w, 2]);
                         for (int i = 0; i < Palette.Count; i++)
                         {
-                            var color2 = new Lab2(Palette[i].X, Palette[i].Y, Palette[i].Z);
-                            deltaE[i] = Lab2.CompareCMC(color1, color2);
+                            var color2 = new Color(Palette[i].X, Palette[i].Y, Palette[i].Z);
+                            deltaE[i] = colorComparer.Compare(color1, color2);
                         }
                         var color = Palette[Array.IndexOf(deltaE, deltaE.Min())];
                         ditherer.Dither(h, w, color);
@@ -174,11 +174,11 @@ namespace Embroider.Quantizers
                     for (int w = 0; w < newImage.Width; w++)
                     {
                         var deltaE = new double[DmcPalette.Count];
-                        var color1 = new Lab2(newImage.Data[h, w, 0], newImage.Data[h, w, 1], newImage.Data[h, w, 2]);
+                        var color1 = new Color(newImage.Data[h, w, 0], newImage.Data[h, w, 1], newImage.Data[h, w, 2]);
                         for (int i = 0; i < DmcPalette.Count; i++)
                         {
-                            var color2 = new Lab2(DmcPalette[i].Red, DmcPalette[i].Green, DmcPalette[i].Blue);
-                            deltaE[i] = Lab2.CompareCMC(color1, color2);
+                            var color2 = new Color(DmcPalette[i].Red, DmcPalette[i].Green, DmcPalette[i].Blue);
+                            deltaE[i] = colorComparer.Compare(color1, color2);
                         }
                         var dmc = DmcPalette[Array.IndexOf(deltaE, deltaE.Min())];
                         ditherer.Dither(h, w, new Color((int)dmc.Red, (int)dmc.Green, (int)dmc.Blue));
