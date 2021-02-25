@@ -58,9 +58,9 @@ namespace Embroider.Ditherers
                         w2 >= 0)
                     {
                         _image[h2, w2] = new Rgb(
-                            _image.Data[h2, w2, 0] + errorX * coefficientMatrix[i, j] / divisor,
-                            _image.Data[h2, w2, 1] + errorY * coefficientMatrix[i, j] / divisor,
-                            _image.Data[h2, w2, 2] + errorZ * coefficientMatrix[i, j] / divisor
+                            Math.Clamp(_image.Data[h2, w2, 0] + errorX * coefficientMatrix[i, j] / divisor, 0, 255),
+                            Math.Clamp(_image.Data[h2, w2, 1] + errorY * coefficientMatrix[i, j] / divisor, 0, 255),
+                            Math.Clamp(_image.Data[h2, w2, 2] + errorZ * coefficientMatrix[i, j] / divisor, 0, 255)
                             );
                     }
                 }

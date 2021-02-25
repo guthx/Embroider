@@ -22,24 +22,24 @@ namespace Embroider
         static void Main(string[] args)
         {
 
-            /*
+            
             var ahri = new Image<Rgb, double>(@"F:\Inne\ahri\ahri_new.jpg");
             
             var embroider = new Embroider(ahri, new EmbroiderOptions
             {
                 OperationOrder = OperationOrder.QuantizeFirst,
-                StichSize = 4,
-                MaxColors = 50,
-                QuantizerType = QuantizerType.KMeans,
+                WidthStitchCount = 200,
+                StitchSize = 0,
+                MaxColors = 80,
+                QuantizerType = QuantizerType.Octree,
                 OutputStitchSize = 4,
                 DithererType = DithererType.Atkinson,
                 ColorSpace = ColorSpace.Rgb,
-                ColorComparerType = ColorComparerType.WeightedEuclideanDistance
+                ColorComparerType = ColorComparerType.WeightedEuclideanDistance,
+                DithererStrength = 15
             });
             embroider.GenerateImage().Convert<Bgr, byte>().Save(@"F:\Inne\ahri\embroider.png");
-            */
-            var test = new Image<Rgb, double>(100, 100, new Rgb(255, 255, 255));
-            test.Data[0, 0, 1] += 23.2;
+            
             
             /*
             var flosses = new List<DMCRGB>();

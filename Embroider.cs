@@ -23,10 +23,11 @@ namespace Embroider
             get => _options;
             set
             {
-                if (value.StichSize != _options.StichSize)
+                if (value.WidthStitchCount != _options.WidthStitchCount ||
+                    value.StitchSize != _options.StitchSize)
                 {
-                    setReducedImage(_image, value.StichSize);
-                    setQuantizer(value.QuantizerType, value.OctreeMode, value.DithererType);
+                    setReducedImage(_image, value.StitchSize, value.WidthStitchCount);
+                    setQuantizer(value.QuantizerType, value.OctreeMode, value.DithererType, value.ColorComparerType, value.DithererStrength);
                     _quantizedImage = null;
                     _reducedDmcImage = null;
                 }
@@ -34,7 +35,7 @@ namespace Embroider
                     value.OctreeMode != _options.OctreeMode ||
                     value.ColorComparerType != _options.ColorComparerType)
                 {
-                    setQuantizer(value.QuantizerType, value.OctreeMode, value.DithererType, value.ColorComparerType);
+                    setQuantizer(value.QuantizerType, value.OctreeMode, value.DithererType, value.ColorComparerType, value.DithererStrength);
                     _quantizedImage = null;
                 }
                 else if (value.DithererType != _options.DithererType ||
@@ -56,14 +57,14 @@ namespace Embroider
         {
             _options = new EmbroiderOptions();
             _image = image;
-            setReducedImage(_image, Options.StichSize);
+            setReducedImage(_image, Options.StitchSize, Options.WidthStitchCount);
             setQuantizer(Options.QuantizerType, Options.OctreeMode, Options.DithererType, Options.ColorComparerType, Options.DithererStrength);
         }
         public Embroider(Image<Rgb, double> image, EmbroiderOptions options)
         {
             _options = options;
             _image = image;
-            setReducedImage(_image, Options.StichSize);
+            setReducedImage(_image, Options.StitchSize, Options.WidthStitchCount);
             setQuantizer(Options.QuantizerType, Options.OctreeMode, Options.DithererType, Options.ColorComparerType, Options.DithererStrength);
         }
         public Image<Rgb, double> GenerateImage()
@@ -123,9 +124,13 @@ namespace Embroider
                 Width = _quantizedImage.Width
             };
         }
-        private void setReducedImage(Image<Rgb, double> image, int size)
+        private void setReducedImage(Image<Rgb, double> image, int stitchSize, int width)
         {
-            _reducedImage = ImageProcessing.MeanReduce(image, size);
+            if (stitchSize > 0)
+                _reducedImage = ImageProcessing.MeanReduce(image, stitchSize);
+            else 
+                _reducedImage = image.Resize((double)width / image.Width, Emgu.CV.CvEnum.Inter.Lanczos4);
+
         }
         private void setQuantizer(QuantizerType type, 
             MergeMode octreeMode = MergeMode.LEAST_IMPORTANT, 
@@ -176,34 +181,21 @@ namespace Embroider
         /// </summary>
         public OperationOrder OperationOrder { get; set; } = OperationOrder.QuantizeFirst;
         /// <summary>
-        /// How many pixels (in width and height) from original image will make up a single stitch. <br/>
-        /// Default: 4
+        /// How many stitches will the output image have in width <br/>
+        /// Default: 100
         /// </summary>
-        public int StichSize { get; set; } = 4;
+        public int WidthStitchCount { get; set; } = 0;
+        public int StitchSize { get; set; } = 4;
         /// <summary>
         /// Maximum number of different colored stitches. <br/>
         /// Default: 64
         /// </summary>
         public int MaxColors { get; set; } = 64;
-        private int _outputStitchSize = 0;
         /// <summary>
         /// How many pixels (in width and height) make up a single stitch in output image. <br/>
         /// If set to 0 (default) it will the number of pixels in StitchSize
         /// </summary>
-        public int OutputStitchSize
-        {
-            get
-            {
-                if (_outputStitchSize == 0)
-                    return StichSize;
-                else
-                    return _outputStitchSize;
-            }
-            set
-            {
-                _outputStitchSize = value;
-            }
-        }
+        public int OutputStitchSize { get; set; } = 4;
         /// <summary>
         /// Set to true to draw a net separating stitches in the output image. <br/>
         /// Default: false

@@ -70,6 +70,13 @@ namespace Embroider.Quantizers
                 );
         }
 
+        public void Clamp()
+        {
+            X = Math.Clamp(X, 0, 255);
+            Y = Math.Clamp(Y, 0, 255);
+            Z = Math.Clamp(Z, 0, 255);
+        }
+
         public override bool Equals(object obj)
         {
             if (obj != null && obj.GetType() == typeof(Color))
