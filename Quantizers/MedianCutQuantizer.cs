@@ -10,7 +10,10 @@ namespace Embroider.Quantizers
 {
     public class MedianCutQuantizer : Quantizer
     {
-        public MedianCutQuantizer(Image<Rgb, double> image, DithererType dithererType, ColorComparerType colorComparerType) : base(image, dithererType, colorComparerType) { }
+        public MedianCutQuantizer(Image<Rgb, double> image, 
+            DithererType dithererType, 
+            ColorComparerType colorComparerType,
+            int dithererStrength = 255) : base(image, dithererType, colorComparerType, dithererStrength) { }
 
 
         private void split(List<Color> pixels, int depth)

@@ -20,5 +20,7 @@ namespace Embroider.Ditherers
         protected override int matrixPosH => 0;
 
         protected override int matrixPosW => 1;
+
+        protected override int divisor => 16;
     }
 }

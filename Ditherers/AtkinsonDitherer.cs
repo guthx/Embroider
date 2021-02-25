@@ -8,7 +8,7 @@ namespace Embroider.Ditherers
 {
     public class AtkinsonDitherer : Ditherer
     {
-        public AtkinsonDitherer(Image<Rgb, double> image, int maxDif = 7) : base(image, maxDif)
+        public AtkinsonDitherer(Image<Rgb, double> image, int maxDif = 255) : base(image, maxDif)
         {
         }
         private int[,] _coeficcientMatrix = new int[,]
@@ -22,5 +22,7 @@ namespace Embroider.Ditherers
         protected override int matrixPosH => 0;
 
         protected override int matrixPosW => 1;
+
+        protected override int divisor => 8;
     }
 }

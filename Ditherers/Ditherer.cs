@@ -14,20 +14,8 @@ namespace Embroider.Ditherers
         protected abstract int[,] coefficientMatrix { get; }
         protected abstract int matrixPosH { get; }
         protected abstract int matrixPosW { get; }
-        private int _coeficcientSum = 0;
-        protected int coeficcientSum
-        {
-            get
-            {
-                if (_coeficcientSum == 0)
-                {
-                    for (int h = 0; h < coefficientMatrix.GetLength(0); h++)
-                        for (int w = 0; w < coefficientMatrix.GetLength(1); w++)
-                            _coeficcientSum += coefficientMatrix[h, w];
-                }
-                return _coeficcientSum;
-            }
-        }
+        protected abstract int divisor { get; }
+
 
         public Ditherer(Image<Rgb, double> image, int maxDif = 255)
         {
@@ -70,9 +58,9 @@ namespace Embroider.Ditherers
                         w2 >= 0)
                     {
                         _image[h2, w2] = new Rgb(
-                            _image.Data[h2, w2, 0] + errorX * coefficientMatrix[i, j] / coeficcientSum,
-                            _image.Data[h2, w2, 1] + errorY * coefficientMatrix[i, j] / coeficcientSum,
-                            _image.Data[h2, w2, 2] + errorZ * coefficientMatrix[i, j] / coeficcientSum
+                            _image.Data[h2, w2, 0] + errorX * coefficientMatrix[i, j] / divisor,
+                            _image.Data[h2, w2, 1] + errorY * coefficientMatrix[i, j] / divisor,
+                            _image.Data[h2, w2, 2] + errorZ * coefficientMatrix[i, j] / divisor
                             );
                     }
                 }

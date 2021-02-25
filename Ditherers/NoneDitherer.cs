@@ -19,6 +19,8 @@ namespace Embroider.Ditherers
 
         protected override int matrixPosW => 0;
 
+        protected override int divisor => 0;
+
         public override void Dither(int h, int w, Color color)
         {
             return;

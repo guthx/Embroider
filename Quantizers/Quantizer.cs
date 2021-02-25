@@ -24,7 +24,10 @@ namespace Embroider.Quantizers
         public Ditherer ditherer;
         public ColorComparer colorComparer;
         
-        public Quantizer(Image<Rgb, double> image, DithererType dithererType = DithererType.None, ColorComparerType colorComparer = ColorComparerType.DE76)
+        public Quantizer(Image<Rgb, double> image, 
+            DithererType dithererType = DithererType.None, 
+            ColorComparerType colorComparer = ColorComparerType.DE76, 
+            int dithererStrength = 255)
         {
             DmcFlossCount = new ConcurrentDictionary<DmcFloss, int>();
             DmcFlossMap = new DmcFloss[image.Height, image.Width];
@@ -32,10 +35,10 @@ namespace Embroider.Quantizers
             pixels = new List<Color>();
             Palette = new List<Color>();
             _image = image;
-            SetDitherer(dithererType);
+            SetDitherer(dithererType, dithererStrength);
             SetColorComparer(colorComparer);
         }
-        public void SetDitherer(DithererType type)
+        public void SetDitherer(DithererType type, int dithererStrength)
         {
             switch (type)
             {
@@ -43,10 +46,19 @@ namespace Embroider.Quantizers
                     ditherer = new NoneDitherer(_image);
                     break;
                 case DithererType.FloydSteinberg:
-                    ditherer = new FloydSteinbergDitherer(_image);
+                    ditherer = new FloydSteinbergDitherer(_image, dithererStrength);
                     break;
                 case DithererType.Atkinson:
-                    ditherer = new AtkinsonDitherer(_image);
+                    ditherer = new AtkinsonDitherer(_image, dithererStrength);
+                    break;
+                case DithererType.Sierra:
+                    ditherer = new SierraDitherer(_image, dithererStrength);
+                    break;
+                case DithererType.Stucki:
+                    ditherer = new StuckiDitherer(_image, dithererStrength);
+                    break;
+                case DithererType.Pigeon:
+                    ditherer = new PigeonDitherer(_image, dithererStrength);
                     break;
                 default:
                     ditherer = new NoneDitherer(_image);

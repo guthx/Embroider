@@ -21,17 +21,10 @@ namespace Embroider
     {
         static void Main(string[] args)
         {
-            var ahri = new Image<Rgb, double>(@"F:\Inne\ahri\ahri_new.jpg");
+
             /*
-            ahri = ImageProcessing.MeanReduce(ahri, 4);
-            ImageProcessing.ReplacePixelsWithDMC(ahri);
-            ahri = ImageProcessing.Stretch(ahri, 4);
-            ahri.Convert<Bgr, byte>().Save(@"F:\Inne\ahri\kupa.png");
+            var ahri = new Image<Rgb, double>(@"F:\Inne\ahri\ahri_new.jpg");
             
-            ahri.Convert<Rgb, byte>().Save(@"F:\Inne\ahri\testconv.png");
-            ImageProcessing.MeanReduce(ahri, 4).Convert<Bgr, byte>().Save(@"F:\Inne\ahri\reduced.png");
-            var test = new Lab2(150, 231, 250);
-            */
             var embroider = new Embroider(ahri, new EmbroiderOptions
             {
                 OperationOrder = OperationOrder.QuantizeFirst,
@@ -44,10 +37,9 @@ namespace Embroider
                 ColorComparerType = ColorComparerType.WeightedEuclideanDistance
             });
             embroider.GenerateImage().Convert<Bgr, byte>().Save(@"F:\Inne\ahri\embroider.png");
-            
-            //ImageProcessing.Stretch(ahri, 4).Convert<Bgr, byte>().Save(@"F:\Inne\ahri\test.png");
-            // var predictor = ImageProcessing.BuildClusterModel(ImageProcessing.GetPixelValues(ahri), 64);
-            // ImageProcessing.Stretch(ImageProcessing.ClusterizeImage(predictor, ahri, 64, true), 8).Convert<Bgr, byte>().Save(@"F:\Inne\ahri\ahri_kmeans_dmc.png");
+            */
+            var test = new Image<Rgb, double>(100, 100, new Rgb(255, 255, 255));
+            test.Data[0, 0, 1] += 23.2;
             
             /*
             var flosses = new List<DMCRGB>();

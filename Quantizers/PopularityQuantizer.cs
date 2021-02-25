@@ -12,7 +12,10 @@ namespace Embroider.Quantizers
 {
     public class PopularityQuantizer : Quantizer
     {
-        public PopularityQuantizer(Image<Rgb, double> image, DithererType dithererType, ColorComparerType colorComparerType) : base(image, dithererType, colorComparerType) { }
+        public PopularityQuantizer(Image<Rgb, double> image, 
+            DithererType dithererType, 
+            ColorComparerType colorComparerType,
+            int dithererStrength = 255) : base(image, dithererType, colorComparerType, dithererStrength) { }
 
         protected override void MakePalette(int paletteSize)
         {

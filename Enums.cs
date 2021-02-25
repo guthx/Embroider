@@ -29,7 +29,10 @@ namespace Embroider
         {
             None,
             FloydSteinberg,
-            Atkinson
+            Atkinson,
+            Stucki,
+            Pigeon,
+            Sierra
         }
         public enum ColorComparerType
         {

@@ -16,7 +16,8 @@ namespace Embroider.Quantizers
         public ModifiedMedianCutQuantizer(Image<Rgb, double> image, int _sigBits = 6, 
             float _fractionByPopulation = 0.80f, 
             DithererType dithererType = DithererType.None, 
-            ColorComparerType colorComparerType = ColorComparerType.DE76) : base(image, dithererType, colorComparerType)
+            ColorComparerType colorComparerType = ColorComparerType.DE76,
+            int dithererStrength = 255) : base(image, dithererType, colorComparerType, dithererStrength)
         {
             sigBits = _sigBits;
             fractionByPopulation = _fractionByPopulation;

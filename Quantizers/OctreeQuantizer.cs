@@ -21,7 +21,8 @@ namespace Embroider.Quantizers
             int maxDepth, 
             MergeMode mergeMode = MergeMode.LEAST_IMPORTANT, 
             DithererType dithererType = DithererType.None, 
-            ColorComparerType colorComparerType = ColorComparerType.DE76) : base(image, dithererType, colorComparerType)
+            ColorComparerType colorComparerType = ColorComparerType.DE76,
+            int dithererStrength = 255) : base(image, dithererType, colorComparerType, dithererStrength)
         {
             MaxDepth = maxDepth;
             _mergeMode = mergeMode;

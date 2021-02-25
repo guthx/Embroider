@@ -12,7 +12,10 @@ namespace Embroider.Quantizers
 {
     public class KMeansQuantizer : Quantizer
     {
-        public KMeansQuantizer(Image<Rgb, double> image, DithererType dithererType, ColorComparerType colorComparerType) : base(image, dithererType, colorComparerType) { }
+        public KMeansQuantizer(Image<Rgb, double> image, 
+            DithererType dithererType, 
+            ColorComparerType colorComparerType, 
+            int dithererStrength = 255) : base(image, dithererType, colorComparerType, dithererStrength) { }
 
         protected override void MakePalette(int paletteSize)
         {
