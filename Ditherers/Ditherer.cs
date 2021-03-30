@@ -1,6 +1,6 @@
 ﻿using Embroider.Quantizers;
-using Emgu.CV;
-using Emgu.CV.Structure;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -9,7 +9,7 @@ namespace Embroider.Ditherers
 {
     public abstract class Ditherer
     {
-        private Image<Rgb, double> _image;
+        private Image<Rgb24> _image;
         private int _maxDif;
         protected abstract int[,] coefficientMatrix { get; }
         protected abstract int matrixPosH { get; }
@@ -17,21 +17,21 @@ namespace Embroider.Ditherers
         protected abstract int divisor { get; }
 
 
-        public Ditherer(Image<Rgb, double> image, int maxDif = 255)
+        public Ditherer(Image<Rgb24> image, int maxDif = 255)
         {
             _image = image;
             _maxDif = maxDif;
         }
-        public void SetImage(Image<Rgb, double> image)
+        public void SetImage(Image<Rgb24> image)
         {
             _image = image;
         }
 
-        public virtual void Dither(int h, int w, Color color)
+        public virtual void Dither(int h, int w, Quantizers.Color color)
         {
-            var errorX = _image.Data[h, w, 0] - color.X;
-            var errorY = _image.Data[h, w, 1] - color.Y;
-            var errorZ = _image.Data[h, w, 2] - color.Z;
+            var errorX = _image[w, h].R - color.X;
+            var errorY = _image[w, h].G - color.Y;
+            var errorZ = _image[w, h].B - color.Z;
 
             if (errorX > _maxDif)
                 errorX = _maxDif;
@@ -57,10 +57,10 @@ namespace Embroider.Ditherers
                         h2 >= 0 &&
                         w2 >= 0)
                     {
-                        _image[h2, w2] = new Rgb(
-                            Math.Clamp(_image.Data[h2, w2, 0] + errorX * coefficientMatrix[i, j] / divisor, 0, 255),
-                            Math.Clamp(_image.Data[h2, w2, 1] + errorY * coefficientMatrix[i, j] / divisor, 0, 255),
-                            Math.Clamp(_image.Data[h2, w2, 2] + errorZ * coefficientMatrix[i, j] / divisor, 0, 255)
+                        _image[w2, h2] = new Rgb24(
+                            (byte)Math.Clamp(_image[w2, h2].R + errorX * coefficientMatrix[i, j] / divisor, 0, 255),
+                            (byte)Math.Clamp(_image[w2, h2].G + errorY * coefficientMatrix[i, j] / divisor, 0, 255),
+                            (byte)Math.Clamp(_image[w2, h2].B + errorZ * coefficientMatrix[i, j] / divisor, 0, 255)
                             );
                     }
                 }

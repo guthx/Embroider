@@ -1,5 +1,5 @@
-﻿using Emgu.CV;
-using Emgu.CV.Structure;
+﻿using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,7 +8,7 @@ namespace Embroider.Ditherers
 {
     public class FloydSteinbergDitherer : Ditherer
     {
-        public FloydSteinbergDitherer(Image<Rgb, double> image, int maxDiff = 255) : base(image, maxDiff)
+        public FloydSteinbergDitherer(Image<Rgb24> image, int maxDiff = 255) : base(image, maxDiff)
         {
         }
         private int[,] _coeficcientMatrix = new int[,] {

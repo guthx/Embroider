@@ -1,8 +1,8 @@
 ﻿using Embroider.Ditherers;
-using Emgu.CV;
-using Emgu.CV.Structure;
 using Microsoft.ML;
 using Microsoft.ML.Data;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -12,7 +12,7 @@ namespace Embroider.Quantizers
 {
     public class KMeansQuantizer : Quantizer
     {
-        public KMeansQuantizer(Image<Rgb, double> image, 
+        public KMeansQuantizer(Image<Rgb24> image, 
             DithererType dithererType, 
             ColorComparerType colorComparerType, 
             int dithererStrength = 255) : base(image, dithererType, colorComparerType, dithererStrength) { }

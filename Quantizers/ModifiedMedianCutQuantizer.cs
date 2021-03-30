@@ -1,11 +1,11 @@
-﻿using Emgu.CV;
-using Emgu.CV.Structure;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using C5;
 using Embroider.Ditherers;
 using static Embroider.Enums;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Embroider.Quantizers
 {
@@ -13,7 +13,7 @@ namespace Embroider.Quantizers
     {
         private int sigBits;
         private float fractionByPopulation;
-        public ModifiedMedianCutQuantizer(Image<Rgb, double> image, int _sigBits = 6, 
+        public ModifiedMedianCutQuantizer(Image<Rgb24> image, int _sigBits = 6, 
             float _fractionByPopulation = 0.85f, 
             DithererType dithererType = DithererType.None, 
             ColorComparerType colorComparerType = ColorComparerType.DE76,

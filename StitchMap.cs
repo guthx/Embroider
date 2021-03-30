@@ -22,8 +22,8 @@ namespace Embroider
             for (int h=0; h<dmcFlossMap.GetLength(0); h++)
                 for (int w=0; w<dmcFlossMap.GetLength(1); w++)
                 {
-                    var index = palette.IndexOf(dmcFlossMap[h, w]);
-                    stitches[h, w] = new Stitch
+                    var index = palette.IndexOf(dmcFlossMap[w, h]);
+                    stitches[w, h] = new Stitch
                     {
                         ColorIndex = index,
                         Stitched = false

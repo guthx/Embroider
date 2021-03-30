@@ -1,8 +1,9 @@
 ﻿using Embroider.Ditherers;
 using Embroider.Quantizers;
-using Emgu.CV;
-using Emgu.CV.Structure;
 using OfficeOpenXml;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,11 +14,11 @@ namespace Embroider
 {
     public class Embroider
     {
-        private Image<Rgb, double> _image;
-        private Image<Rgb, double> _reducedImage;
-        private Image<Rgb, double> _reducedDmcImage;
+        private Image<Rgb24> _image;
+        private Image<Rgb24> _reducedImage;
+        private Image<Rgb24> _reducedDmcImage;
         private Quantizer _quantizer;
-        private Image<Rgb, double> _quantizedImage;
+        private Image<Rgb24> _quantizedImage;
         private EmbroiderOptions _options;
         public EmbroiderOptions Options {
             get => _options;
@@ -53,21 +54,21 @@ namespace Embroider
                 _options = value;
             }
         }
-        public Embroider(Image<Rgb, double> image)
+        public Embroider(Image<Rgb24> image)
         {
             _options = new EmbroiderOptions();
             _image = image;
             setReducedImage(_image, Options.StitchSize, Options.WidthStitchCount);
             setQuantizer(Options.QuantizerType, Options.OctreeMode, Options.DithererType, Options.ColorComparerType, Options.DithererStrength);
         }
-        public Embroider(Image<Rgb, double> image, EmbroiderOptions options)
+        public Embroider(Image<Rgb24> image, EmbroiderOptions options)
         {
             _options = options;
             _image = image;
             setReducedImage(_image, Options.StitchSize, Options.WidthStitchCount);
             setQuantizer(Options.QuantizerType, Options.OctreeMode, Options.DithererType, Options.ColorComparerType, Options.DithererStrength);
         }
-        public Image<Rgb, double> GenerateImage()
+        public Image<Rgb24> GenerateImage()
         {
             if (_quantizedImage == null)
             {
@@ -75,7 +76,7 @@ namespace Embroider
                 {
                     if (_reducedDmcImage == null)
                     {
-                        _reducedDmcImage = _reducedImage.Copy();
+                        _reducedDmcImage = _reducedImage.Clone();
                         ImageProcessing.ReplacePixelsWithDMC(_reducedDmcImage, _quantizer.colorComparer, _quantizer.ditherer);
                     }
                     _quantizer.SetImage(_reducedDmcImage);
@@ -87,22 +88,13 @@ namespace Embroider
                 switch (Options.ColorSpace)
                 {
                     case ColorSpace.Rgb:
-                        _quantizer.GeneratePalette<Rgb>(Options.MaxColors);
+                        _quantizer.GeneratePalette(Options.MaxColors, ColorSpace.Rgb);
                         break;
                     case ColorSpace.Lab:
-                        _quantizer.GeneratePalette<Lab>(Options.MaxColors);
-                        break;
-                    case ColorSpace.Hsv:
-                        _quantizer.GeneratePalette<Hsv>(Options.MaxColors);
-                        break;
-                    case ColorSpace.Ycc:
-                        _quantizer.GeneratePalette<Ycc>(Options.MaxColors);
-                        break;
-                    case ColorSpace.Luv:
-                        _quantizer.GeneratePalette<Luv>(Options.MaxColors);
+                        _quantizer.GeneratePalette(Options.MaxColors, ColorSpace.Lab);
                         break;
                     default:
-                        _quantizer.GeneratePalette<Rgb>(Options.MaxColors);
+                        _quantizer.GeneratePalette(Options.MaxColors, ColorSpace.Rgb);
                         break;
                 };
                 _quantizedImage = _quantizer.GetQuantizedImage(true);
@@ -129,12 +121,12 @@ namespace Embroider
         {
             return new StitchMap(_quantizer.DmcFlossMap, _quantizer.DmcPalette);
         }
-        private void setReducedImage(Image<Rgb, double> image, int stitchSize, int width)
+        private void setReducedImage(Image<Rgb24> image, int stitchSize, int width)
         {
             if (stitchSize > 0)
                 _reducedImage = ImageProcessing.MeanReduce(image, stitchSize);
-            else 
-                _reducedImage = image.Resize((double)width / image.Width, Emgu.CV.CvEnum.Inter.Lanczos4);
+            else
+                _reducedImage = image.Clone(x => x.Resize(width, (int)((double)width / image.Width), KnownResamplers.Lanczos3));
 
         }
         private void setQuantizer(QuantizerType type, 

@@ -1,7 +1,5 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
-using Emgu.CV;
-using Emgu.CV.Structure;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -9,6 +7,8 @@ using System.IO;
 using System.Linq;
 using Embroider.Quantizers;
 using static Embroider.Enums;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Embroider
 {
@@ -22,29 +22,30 @@ namespace Embroider
         static void Main(string[] args)
         {
 
-            
-            var ahri = new Image<Rgb, double>(@"F:\Inne\ahri\ahri_new.jpg");
+
+            Image<Rgb24> ahri = Image.Load<Rgb24>(@"F:\Inne\ahri\ahri_new.jpg");
             
             var embroider = new Embroider(ahri, new EmbroiderOptions
             {
                 OperationOrder = OperationOrder.QuantizeFirst,
                 WidthStitchCount = 200,
-                StitchSize = 0,
+                StitchSize = 4,
                 MaxColors = 80,
                 QuantizerType = QuantizerType.Octree,
                 OutputStitchSize = 4,
                 DithererType = DithererType.Atkinson,
                 ColorSpace = ColorSpace.Rgb,
                 ColorComparerType = ColorComparerType.WeightedEuclideanDistance,
-                DithererStrength = 15
+                DithererStrength = 15,
+                Net = true
             });
-            embroider.GenerateImage().Convert<Bgr, byte>().Save(@"F:\Inne\ahri\embroider.png");
+            embroider.GenerateImage().SaveAsPng(@"F:\Inne\ahri\embroider.png");
             
             
             /*
             var flosses = new List<DMCRGB>();
             var flossesLab = new List<DmcFloss>();
-            var convertHelper = new Image<Rgb, byte>(1, 1);
+            var convertHelper = new Image<Rgb24><Rgb, byte>(1, 1);
             using (var reader = new StreamReader(@"F:\Inne\ahri\palette.csv"))
             using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
             {
