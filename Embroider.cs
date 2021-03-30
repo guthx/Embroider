@@ -124,6 +124,11 @@ namespace Embroider
                 Width = _quantizedImage.Width
             };
         }
+
+        public StitchMap GetStitchMap()
+        {
+            return new StitchMap(_quantizer.DmcFlossMap, _quantizer.DmcPalette);
+        }
         private void setReducedImage(Image<Rgb, double> image, int stitchSize, int width)
         {
             if (stitchSize > 0)

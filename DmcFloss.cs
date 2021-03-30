@@ -4,6 +4,7 @@ using System.Text;
 
 namespace Embroider
 {
+    [Serializable]
     public class DmcFloss
     {
         public string Number { get; set; }

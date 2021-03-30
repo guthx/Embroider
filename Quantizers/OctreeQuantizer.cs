@@ -36,6 +36,8 @@ namespace Embroider.Quantizers
         {
             Root = new OctreeNode(0, this);
             Palette.Clear();
+            for (int i = 0; i < MaxDepth; i++)
+                Levels[i].Clear();
             for (int i=0; i<pixels.Count; i++)
             {
                 addColor(pixels[i]);
