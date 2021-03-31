@@ -28,16 +28,15 @@ namespace Embroider
             var embroider = new Embroider(ahri, new EmbroiderOptions
             {
                 OperationOrder = OperationOrder.QuantizeFirst,
-                WidthStitchCount = 200,
+                WidthStitchCount = 0,
                 StitchSize = 4,
                 MaxColors = 80,
-                QuantizerType = QuantizerType.Octree,
+                QuantizerType = QuantizerType.ModifiedMedianCut,
                 OutputStitchSize = 4,
                 DithererType = DithererType.Atkinson,
-                ColorSpace = ColorSpace.Rgb,
-                ColorComparerType = ColorComparerType.WeightedEuclideanDistance,
+                ColorSpace = ColorSpace.Lab,
+                ColorComparerType = ColorComparerType.DE2000,
                 DithererStrength = 15,
-                Net = true
             });
             embroider.GenerateImage().SaveAsPng(@"F:\Inne\ahri\embroider.png");
             

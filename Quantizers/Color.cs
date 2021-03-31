@@ -107,9 +107,9 @@ namespace Embroider.Quantizers
                     );
             else
                 return new Color(
-                    ((116 * y) - 16) * (100/255),
-                    500 * (x - y) - 128,
-                    200 * (y - z) - 128
+                    ((116 * y) - 16) * (255.0/100),
+                    500 * (x - y) + 128,
+                    200 * (y - z) + 128
                     );
         }
 
@@ -118,9 +118,9 @@ namespace Embroider.Quantizers
             double L = X, a = Y, b = Z;
             if (normalized)
             {
-                L = L * (255 / 100);
-                a = a + 128;
-                b = b + 128;
+                L = L * (100.0 / 255);
+                a = a - 128;
+                b = b - 128;
             }
             var fy = (L + 16) / 116;
             var fx = a / 500 + fy;
