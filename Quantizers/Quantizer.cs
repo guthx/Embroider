@@ -94,11 +94,11 @@ namespace Embroider.Quantizers
             _image = image;
             pixels.Clear();
             Palette.Clear();
-            DmcPalette.Clear();
+            DmcPalette = new List<DmcFloss>();
             DmcFlossCount.Clear();
             DmcFlossMap = new DmcFloss[image.Width, image.Height];
         }
-        public virtual void GeneratePalette(int paletteSize, ColorSpace colorSpace, bool generateDmcPalette = true)
+        public virtual List<DmcFloss> GeneratePalette(int paletteSize, ColorSpace colorSpace)
         {
             pixels.Clear();
             for (int h = 0; h < _image.Height; h++)
@@ -110,7 +110,7 @@ namespace Embroider.Quantizers
                 }
             }
             Palette.Clear();
-            DmcPalette.Clear();
+            DmcPalette = new List<DmcFloss>();
             MakePalette(paletteSize);
             //convert palette back to RGB
             for (int i = 0; i < Palette.Count; i++)
@@ -118,9 +118,8 @@ namespace Embroider.Quantizers
                 if (colorSpace == ColorSpace.Lab)
                     Palette[i] = Palette[i].LabToRgb(true);
             }
-            if (generateDmcPalette)
-                GenerateDmcPalette();
-
+            GenerateDmcPalette();
+            return DmcPalette;
             
         }
 
@@ -144,65 +143,42 @@ namespace Embroider.Quantizers
             }
         }
 
-        public virtual Image<Rgb24> GetQuantizedImage(bool useDmcColors = true)
+        public virtual Image<Rgb24> GetQuantizedImage(List<DmcFloss> palette)
         {
-            if (useDmcColors && (DmcPalette.Count == 0))
-                throw new Exception("Cannot quantize image with DMC colors without generating a DMC palette");
+            if (palette.Count == 0)
+                throw new Exception("Cannot quantize image with an empty palette.");
 
+            DmcPalette = palette;
             var newImage = _image.Clone();
             ditherer.SetImage(newImage);
-            if (!useDmcColors)
+            DmcFlossCount.Clear();
+            for (int h = 0; h < newImage.Height; h++)
             {
-                for (int h = 0; h < newImage.Height; h++)
+                var pixelRow = newImage.GetPixelRowSpan(h);
+                for (int w = 0; w < newImage.Width; w++)
                 {
-                    var pixelRow = newImage.GetPixelRowSpan(h);
-                    for (int w = 0; w < newImage.Width; w++)
+                    var deltaE = new double[palette.Count];
+                    var color1 = new Color(pixelRow[w].R, pixelRow[w].G, pixelRow[w].B);
+                    for (int i = 0; i < palette.Count; i++)
                     {
-                        var deltaE = new double[Palette.Count];
-                        var color1 = new Color(pixelRow[w].R, pixelRow[w].G, pixelRow[w].B);
-                        for (int i = 0; i < Palette.Count; i++)
-                        {
-                            var color2 = new Color(Palette[i].X, Palette[i].Y, Palette[i].Z);
-                            deltaE[i] = colorComparer.Compare(color1, color2);
-                        }
-                        var color = Palette[Array.IndexOf(deltaE, deltaE.Min())];
-                        ditherer.Dither(h, w, color);
-                        pixelRow[w] = new Rgb24((byte)color.X, (byte)color.Y, (byte)color.Z);
-                        
+                        var color2 = new Color(palette[i].Red, palette[i].Green, palette[i].Blue);
+                        deltaE[i] = colorComparer.Compare(color1, color2);
                     }
-                }
-            }
-            else
-            {
-                DmcFlossCount.Clear();
-                for (int h = 0; h < newImage.Height; h++)
-                {
-                    var pixelRow = newImage.GetPixelRowSpan(h);
-                    for (int w = 0; w < newImage.Width; w++)
-                    {
-                        var deltaE = new double[DmcPalette.Count];
-                        var color1 = new Color(pixelRow[w].R, pixelRow[w].G, pixelRow[w].B);
-                        for (int i = 0; i < DmcPalette.Count; i++)
-                        {
-                            var color2 = new Color(DmcPalette[i].Red, DmcPalette[i].Green, DmcPalette[i].Blue);
-                            deltaE[i] = colorComparer.Compare(color1, color2);
-                        }
-                        var dmc = DmcPalette[Array.IndexOf(deltaE, deltaE.Min())];
-                        ditherer.Dither(h, w, new Color((int)dmc.Red, (int)dmc.Green, (int)dmc.Blue));
-                        pixelRow[w] = new Rgb24((byte)dmc.Red, (byte)dmc.Green, (byte)dmc.Blue);
-                        DmcFlossCount.AddOrUpdate(dmc, 1, (dmc, count) => count + 1);
-                        DmcFlossMap[w, h] = dmc;
-                    }
+                    var dmc = palette[Array.IndexOf(deltaE, deltaE.Min())];
+                    ditherer.Dither(h, w, new Color((int)dmc.Red, (int)dmc.Green, (int)dmc.Blue));
+                    pixelRow[w] = new Rgb24((byte)dmc.Red, (byte)dmc.Green, (byte)dmc.Blue);
+                    DmcFlossCount.AddOrUpdate(dmc, 1, (dmc, count) => count + 1);
+                    DmcFlossMap[w, h] = dmc;
                 }
             }
             return newImage;
         }
 
-        public virtual ExcelPackage GenerateExcelSpreadsheet()
+    public virtual ExcelPackage GenerateExcelSpreadsheet()
         {
             if (DmcFlossCount.Count == 0)
                 throw new Exception("Cannot generate Excel spreadsheet without generating a quantized image with DMC flosses");
-
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             var p = new ExcelPackage();
                 var flossesUsed = new List<DmcFloss>();
             var flossCountList = DmcFlossCount.ToList();

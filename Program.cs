@@ -31,7 +31,7 @@ namespace Embroider
                 WidthStitchCount = 0,
                 StitchSize = 4,
                 MaxColors = 80,
-                QuantizerType = QuantizerType.ModifiedMedianCut,
+                QuantizerType = QuantizerType.KMeans,
                 OutputStitchSize = 4,
                 DithererType = DithererType.Atkinson,
                 ColorSpace = ColorSpace.Lab,

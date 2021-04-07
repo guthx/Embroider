@@ -20,6 +20,7 @@ namespace Embroider
         private Quantizer _quantizer;
         private Image<Rgb24> _quantizedImage;
         private EmbroiderOptions _options;
+        private Dictionary<string, List<DmcFloss>> _palettes;
         public EmbroiderOptions Options {
             get => _options;
             set
@@ -60,6 +61,7 @@ namespace Embroider
             _image = image;
             setReducedImage(_image, Options.StitchSize, Options.WidthStitchCount);
             setQuantizer(Options.QuantizerType, Options.OctreeMode, Options.DithererType, Options.ColorComparerType, Options.DithererStrength);
+            _palettes = new Dictionary<string, List<DmcFloss>>();
         }
         public Embroider(Image<Rgb24> image, EmbroiderOptions options)
         {
@@ -67,6 +69,7 @@ namespace Embroider
             _image = image;
             setReducedImage(_image, Options.StitchSize, Options.WidthStitchCount);
             setQuantizer(Options.QuantizerType, Options.OctreeMode, Options.DithererType, Options.ColorComparerType, Options.DithererStrength);
+            _palettes = new Dictionary<string, List<DmcFloss>>();
         }
         public Image<Rgb24> GenerateImage()
         {
@@ -85,19 +88,25 @@ namespace Embroider
                 {
                     _quantizer.SetImage(_reducedImage);
                 }
-                switch (Options.ColorSpace)
+                var settingsCode = Options.GetSettingsCode();
+                List<DmcFloss> palette;
+                if (!_palettes.TryGetValue(settingsCode, out palette))
                 {
-                    case ColorSpace.Rgb:
-                        _quantizer.GeneratePalette(Options.MaxColors, ColorSpace.Rgb);
-                        break;
-                    case ColorSpace.Lab:
-                        _quantizer.GeneratePalette(Options.MaxColors, ColorSpace.Lab);
-                        break;
-                    default:
-                        _quantizer.GeneratePalette(Options.MaxColors, ColorSpace.Rgb);
-                        break;
-                };
-                _quantizedImage = _quantizer.GetQuantizedImage(true);
+                    switch (Options.ColorSpace)
+                    {
+                        case ColorSpace.Rgb:
+                            palette = _quantizer.GeneratePalette(Options.MaxColors, ColorSpace.Rgb);
+                            break;
+                        case ColorSpace.Lab:
+                            palette = _quantizer.GeneratePalette(Options.MaxColors, ColorSpace.Lab);
+                            break;
+                        default:
+                            palette = _quantizer.GeneratePalette(Options.MaxColors, ColorSpace.Rgb);
+                            break;
+                    };
+                    _palettes[settingsCode] = palette;
+                }
+                _quantizedImage = _quantizer.GetQuantizedImage(palette);
             }
             return ImageProcessing.Stretch(_quantizedImage, Options.OutputStitchSize, Options.Net);
         }
@@ -208,6 +217,22 @@ namespace Embroider
         public ColorSpace ColorSpace { get; set; } = ColorSpace.Rgb;
         public ColorComparerType ColorComparerType { get; set; } = ColorComparerType.DE76;
         public int DithererStrength { get; set; } = 255;
+
+        public string GetSettingsCode()
+        {
+            var codeBuilder = new StringBuilder();
+            codeBuilder.Append((int)QuantizerType);
+            codeBuilder.Append((int)WidthStitchCount);
+            codeBuilder.Append((int)StitchSize);
+            codeBuilder.Append((int)MaxColors);
+            codeBuilder.Append((int)OctreeMode);
+            codeBuilder.Append((int)DithererType);
+            codeBuilder.Append((int)DithererStrength);
+            codeBuilder.Append((int)ColorSpace);
+            codeBuilder.Append((int)ColorComparerType);
+
+            return codeBuilder.ToString();
+        }
     }
 
     
