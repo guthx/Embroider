@@ -164,6 +164,9 @@ namespace Embroider
                 case QuantizerType.ModifiedMedianCut:
                     _quantizer = new ModifiedMedianCutQuantizer(_reducedImage, 6, 0.85f, dithererType, colorComparerType, dithererStrength);
                     break;
+                case QuantizerType.Wu:
+                    _quantizer = new WuQuantizer(_reducedImage, dithererType, colorComparerType, dithererStrength);
+                    break;
                 default:
                     _quantizer = new ModifiedMedianCutQuantizer(_reducedImage, 6, 0.85f, dithererType, colorComparerType, dithererStrength);
                     break;

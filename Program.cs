@@ -23,19 +23,18 @@ namespace Embroider
         {
 
 
-            Image<Rgb24> ahri = Image.Load<Rgb24>(@"F:\Inne\ahri\ahri_new.jpg");
-            
+            Image<Rgb24> ahri = Image.Load<Rgb24>(@"F:\Inne\ahri\ahri.jpg");
             var embroider = new Embroider(ahri, new EmbroiderOptions
             {
                 OperationOrder = OperationOrder.QuantizeFirst,
                 WidthStitchCount = 0,
-                StitchSize = 4,
-                MaxColors = 80,
-                QuantizerType = QuantizerType.KMeans,
+                StitchSize = 1,
+                MaxColors = 60,
+                QuantizerType = QuantizerType.Wu,
                 OutputStitchSize = 4,
                 DithererType = DithererType.Atkinson,
-                ColorSpace = ColorSpace.Lab,
-                ColorComparerType = ColorComparerType.DE2000,
+                ColorSpace = ColorSpace.Rgb,
+                ColorComparerType = ColorComparerType.WeightedEuclideanDistance,
                 DithererStrength = 15,
             });
             embroider.GenerateImage().SaveAsPng(@"F:\Inne\ahri\embroider.png");
