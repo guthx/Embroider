@@ -21,25 +21,28 @@ namespace Embroider
     {
         static void Main(string[] args)
         {
-
+            
 
             Image<Rgb24> ahri = Image.Load<Rgb24>(@"F:\Inne\ahri\ahri.jpg");
+            var excluded = new string[] { "3803", "3722", "2221", "794" };
             var embroider = new Embroider(ahri, new EmbroiderOptions
             {
                 OperationOrder = OperationOrder.QuantizeFirst,
                 WidthStitchCount = 0,
-                StitchSize = 1,
-                MaxColors = 60,
-                QuantizerType = QuantizerType.Wu,
+                StitchSize = 4,
+                MaxColors = 32,
+                QuantizerType = QuantizerType.ModifiedMedianCut,
                 OutputStitchSize = 4,
                 DithererType = DithererType.Atkinson,
                 ColorSpace = ColorSpace.Rgb,
                 ColorComparerType = ColorComparerType.WeightedEuclideanDistance,
-                DithererStrength = 15,
+                DithererStrength = 10,
             });
-            embroider.GenerateImage().SaveAsPng(@"F:\Inne\ahri\embroider.png");
+            embroider.GenerateImage();
+            embroider.ExcludeFlosses(excluded).SaveAsPng(@"F:\Inne\ahri\embroider.png");
             
             
+
             /*
             var flosses = new List<DMCRGB>();
             var flossesLab = new List<DmcFloss>();

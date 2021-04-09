@@ -14,9 +14,9 @@ namespace Embroider
     public class StitchMap
     {
         public Stitch[,] Stitches { get; set; }
-        public DmcFloss[] DmcFlosses { get; set; }
+        public Floss[] DmcFlosses { get; set; }
 
-        public StitchMap(DmcFloss[,] dmcFlossMap, List<DmcFloss> palette)
+        public StitchMap(Floss[,] dmcFlossMap, List<Floss> palette)
         {
             var stitches = new Stitch[dmcFlossMap.GetLength(1), dmcFlossMap.GetLength(0)];
             for (int h=0; h<dmcFlossMap.GetLength(1); h++)

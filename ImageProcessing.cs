@@ -17,7 +17,7 @@ namespace Embroider
 {
     public static class ImageProcessing
     {
-        public static List<DmcFloss> DmcFlosses;
+        public static List<Floss> DmcFlosses;
 
         public static Image<Rgb24> MeanReduce(Image<Rgb24> image, int pixelSize)
         {
@@ -85,8 +85,8 @@ namespace Embroider
         }
         public static void ReplacePixelsWithDMC(Image<Rgb24> image, ColorComparer colorComparer, Ditherer ditherer)
         {
-            var colorsCount = new Dictionary<DmcFloss, int>();
-            DmcFlosses = Flosses.Dmc;
+            var colorsCount = new Dictionary<Floss, int>();
+            DmcFlosses = Flosses.Dmc();
 
             for(int h=0; h<image.Height; h++)
             {

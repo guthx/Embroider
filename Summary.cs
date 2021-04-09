@@ -7,7 +7,7 @@ namespace Embroider
 {
     public class Summary
     {
-        public ConcurrentDictionary<DmcFloss, int> FlossCount { get; set; }
+        public ConcurrentDictionary<Floss, int> FlossCount { get; set; }
         public int Height { get; set; }
         public int Width { get; set; }
     }

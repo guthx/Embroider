@@ -5,7 +5,7 @@ using System.Text;
 namespace Embroider
 {
     [Serializable]
-    public class DmcFloss
+    public class Floss
     {
         public string Number { get; set; }
         public string Description { get; set; }

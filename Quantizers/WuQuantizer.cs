@@ -32,9 +32,7 @@ namespace Embroider.Quantizers
         private int[] quantizedPixels;
         private int[] table;
 
-        private int imageWidth;
         private int imageSize;
-        private int pixelIndex;
 
         private WuCube[] cubes;
 
@@ -330,8 +328,6 @@ namespace Embroider.Quantizers
                 table[i] = i * i;
             }
 
-            pixelIndex = 0;
-            imageWidth = _image.Width;
             imageSize = _image.Width * _image.Height;
 
             quantizedPixels = new int[imageSize];

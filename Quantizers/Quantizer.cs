@@ -16,11 +16,12 @@ namespace Embroider.Quantizers
     public abstract class Quantizer
     {
         public List<Color> Palette;
-        public List<DmcFloss> DmcPalette;
+        public List<Floss> FlossPalette;
+        public List<Floss> AvailableFlosses;
         protected List<Color> pixels;
         protected Image<Rgb24> _image;
-        public ConcurrentDictionary<DmcFloss, int> DmcFlossCount;
-        public DmcFloss[,] DmcFlossMap;
+        public ConcurrentDictionary<Floss, int> DmcFlossCount;
+        public Floss[,] DmcFlossMap;
         public Ditherer ditherer;
         public ColorComparer colorComparer;
         
@@ -29,9 +30,9 @@ namespace Embroider.Quantizers
             ColorComparerType colorComparer = ColorComparerType.DE76, 
             int dithererStrength = 255)
         {
-            DmcFlossCount = new ConcurrentDictionary<DmcFloss, int>();
-            DmcFlossMap = new DmcFloss[image.Width, image.Height];
-            DmcPalette = new List<DmcFloss>();
+            DmcFlossCount = new ConcurrentDictionary<Floss, int>();
+            DmcFlossMap = new Floss[image.Width, image.Height];
+            FlossPalette = new List<Floss>();
             pixels = new List<Color>();
             Palette = new List<Color>();
             _image = image;
@@ -94,11 +95,11 @@ namespace Embroider.Quantizers
             _image = image;
             pixels.Clear();
             Palette.Clear();
-            DmcPalette = new List<DmcFloss>();
+            FlossPalette = new List<Floss>();
             DmcFlossCount.Clear();
-            DmcFlossMap = new DmcFloss[image.Width, image.Height];
+            DmcFlossMap = new Floss[image.Width, image.Height];
         }
-        public virtual List<DmcFloss> GeneratePalette(int paletteSize, ColorSpace colorSpace)
+        public virtual List<Floss> GeneratePalette(int paletteSize, ColorSpace colorSpace)
         {
             pixels.Clear();
             for (int h = 0; h < _image.Height; h++)
@@ -110,7 +111,7 @@ namespace Embroider.Quantizers
                 }
             }
             Palette.Clear();
-            DmcPalette = new List<DmcFloss>();
+            FlossPalette = new List<Floss>();
             MakePalette(paletteSize);
             //convert palette back to RGB
             for (int i = 0; i < Palette.Count; i++)
@@ -118,37 +119,38 @@ namespace Embroider.Quantizers
                 if (colorSpace == ColorSpace.Lab)
                     Palette[i] = Palette[i].LabToRgb(true);
             }
-            GenerateDmcPalette();
-            return DmcPalette;
+            if (AvailableFlosses == null)
+                AvailableFlosses = Flosses.Dmc(); 
+            GenerateFlossPalette();
+            return FlossPalette;
             
         }
 
         protected abstract void MakePalette(int paletteSize);
 
-        protected virtual void GenerateDmcPalette()
+        protected virtual void GenerateFlossPalette()
         {
-            var dmcColors = Flosses.Dmc;
             for (int i = 0; i < Palette.Count; i++)
             {
-                var deltaE = new double[dmcColors.Count];
+                var deltaE = new double[AvailableFlosses.Count];
                 var color1 = new Color(Palette[i].X, Palette[i].Y, Palette[i].Z);
-                for (int j = 0; j < dmcColors.Count; j++)
+                for (int j = 0; j < AvailableFlosses.Count; j++)
                 {
-                    var color2 = new Color(dmcColors[j].Red, dmcColors[j].Green, dmcColors[j].Blue);
+                    var color2 = new Color(AvailableFlosses[j].Red, AvailableFlosses[j].Green, AvailableFlosses[j].Blue);
                     deltaE[j] = colorComparer.Compare(color1, color2);
                 }
-                var dmc = dmcColors[Array.IndexOf(deltaE, deltaE.Min())];
-                if (!DmcPalette.Contains(dmc))
-                    DmcPalette.Add(dmc);
+                var dmc = AvailableFlosses[Array.IndexOf(deltaE, deltaE.Min())];
+                if (!FlossPalette.Contains(dmc))
+                    FlossPalette.Add(dmc);
             }
         }
 
-        public virtual Image<Rgb24> GetQuantizedImage(List<DmcFloss> palette)
+        public virtual Image<Rgb24> GetQuantizedImage(List<Floss> palette)
         {
             if (palette.Count == 0)
                 throw new Exception("Cannot quantize image with an empty palette.");
 
-            DmcPalette = palette;
+            FlossPalette = palette;
             var newImage = _image.Clone();
             ditherer.SetImage(newImage);
             DmcFlossCount.Clear();
@@ -174,13 +176,27 @@ namespace Embroider.Quantizers
             return newImage;
         }
 
+        public void RestrictFlossPalette()
+        {
+            var flossesToRemove = new List<int>();
+            for (int i = FlossPalette.Count - 1; i >= 0; i--)
+            {
+                if (!DmcFlossCount.ContainsKey(FlossPalette[i]))
+                    flossesToRemove.Add(i);
+            }
+            foreach(var i in flossesToRemove)
+            {
+                FlossPalette.RemoveAt(i);
+            }
+        }
+
     public virtual ExcelPackage GenerateExcelSpreadsheet()
         {
             if (DmcFlossCount.Count == 0)
                 throw new Exception("Cannot generate Excel spreadsheet without generating a quantized image with DMC flosses");
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             var p = new ExcelPackage();
-                var flossesUsed = new List<DmcFloss>();
+                var flossesUsed = new List<Floss>();
             var flossCountList = DmcFlossCount.ToList();
             foreach (var floss in DmcFlossCount)
             {
