@@ -1,18 +1,18 @@
-﻿using Emgu.CV;
-using Emgu.CV.Structure;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using Embroider.Ditherers;
 using static Embroider.Enums;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Embroider.Quantizers
 {
     public class SimplePopularityQuantizer : Quantizer
     {
-        public SimplePopularityQuantizer(Image<Rgb, double> image, 
+        public SimplePopularityQuantizer(Image<Rgb24> image, 
             DithererType dithererType, 
             ColorComparerType colorComparerType,
             int dithererStrength = 255) : base(image, dithererType, colorComparerType, dithererStrength) { }

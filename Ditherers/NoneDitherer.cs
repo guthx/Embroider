@@ -1,6 +1,6 @@
 ﻿using Embroider.Quantizers;
-using Emgu.CV;
-using Emgu.CV.Structure;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -9,7 +9,7 @@ namespace Embroider.Ditherers
 {
     public class NoneDitherer : Ditherer
     {
-        public NoneDitherer(Image<Rgb, double> image, int maxDif = 255) : base(image, maxDif)
+        public NoneDitherer(Image<Rgb24> image, int maxDif = 255) : base(image, maxDif)
         {
         }
 
@@ -21,7 +21,7 @@ namespace Embroider.Ditherers
 
         protected override int divisor => 0;
 
-        public override void Dither(int h, int w, Color color)
+        public override void Dither(int h, int w, Quantizers.Color color)
         {
             return;
         }

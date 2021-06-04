@@ -1,11 +1,13 @@
 ﻿using Embroider.Ditherers;
 using Embroider.Quantizers;
-using Emgu.CV;
-using Emgu.CV.Structure;
 using OfficeOpenXml;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Text;
 using static Embroider.Enums;
 
@@ -13,20 +15,23 @@ namespace Embroider
 {
     public class Embroider
     {
-        private Image<Rgb, double> _image;
-        private Image<Rgb, double> _reducedImage;
-        private Image<Rgb, double> _reducedDmcImage;
+        private Image<Rgb24> _image;
+        private Image<Rgb24> _reducedImage;
+        private Image<Rgb24> _reducedDmcImage;
         private Quantizer _quantizer;
-        private Image<Rgb, double> _quantizedImage;
+        private Image<Rgb24> _quantizedImage;
         private EmbroiderOptions _options;
+        private Dictionary<string, List<Floss>> _palettes;
+        private List<Floss> _currentPalette;
         public EmbroiderOptions Options {
             get => _options;
             set
             {
-                if (value.StichSize != _options.StichSize)
+                if (value.WidthStitchCount != _options.WidthStitchCount ||
+                    value.StitchSize != _options.StitchSize)
                 {
-                    setReducedImage(_image, value.StichSize);
-                    setQuantizer(value.QuantizerType, value.OctreeMode, value.DithererType);
+                    setReducedImage(_image, value.StitchSize, value.WidthStitchCount);
+                    setQuantizer(value.QuantizerType, value.OctreeMode, value.DithererType, value.ColorComparerType, value.DithererStrength, value.Flosses);
                     _quantizedImage = null;
                     _reducedDmcImage = null;
                 }
@@ -34,7 +39,7 @@ namespace Embroider
                     value.OctreeMode != _options.OctreeMode ||
                     value.ColorComparerType != _options.ColorComparerType)
                 {
-                    setQuantizer(value.QuantizerType, value.OctreeMode, value.DithererType, value.ColorComparerType);
+                    setQuantizer(value.QuantizerType, value.OctreeMode, value.DithererType, value.ColorComparerType, value.DithererStrength, value.Flosses);
                     _quantizedImage = null;
                 }
                 else if (value.DithererType != _options.DithererType ||
@@ -49,63 +54,74 @@ namespace Embroider
                 {
                     _quantizedImage = null;
                 }
+                if (value.Flosses != _options.Flosses)
+                {
+                    _quantizedImage = null;
+                    _quantizer.AvailableFlosses = value.Flosses;
+                    _palettes.Clear();
+                }
                 _options = value;
             }
         }
-        public Embroider(Image<Rgb, double> image)
+        public Embroider(Image<Rgb24> image)
         {
             _options = new EmbroiderOptions();
             _image = image;
-            setReducedImage(_image, Options.StichSize);
+            setReducedImage(_image, Options.StitchSize, Options.WidthStitchCount);
             setQuantizer(Options.QuantizerType, Options.OctreeMode, Options.DithererType, Options.ColorComparerType, Options.DithererStrength);
+            _palettes = new Dictionary<string, List<Floss>>();
+            _options.Flosses = Flosses.Dmc().ToList();
+            _quantizer.AvailableFlosses = _options.Flosses;
         }
-        public Embroider(Image<Rgb, double> image, EmbroiderOptions options)
+        public Embroider(Image<Rgb24> image, EmbroiderOptions options)
         {
             _options = options;
             _image = image;
-            setReducedImage(_image, Options.StichSize);
+            setReducedImage(_image, Options.StitchSize, Options.WidthStitchCount);
             setQuantizer(Options.QuantizerType, Options.OctreeMode, Options.DithererType, Options.ColorComparerType, Options.DithererStrength);
-        }
-        public Image<Rgb, double> GenerateImage()
-        {
-            if (_quantizedImage == null)
+            _palettes = new Dictionary<string, List<Floss>>();
+            if (_options.Flosses == null)
             {
-                if (Options.OperationOrder == OperationOrder.ReplacePixelsFirst)
+                _options.Flosses = Flosses.Dmc().ToList();
+            }
+            _quantizer.AvailableFlosses = _options.Flosses;
+        }
+        public Image<Rgb24> GenerateImage()
+        {
+            if (Options.OperationOrder == OperationOrder.ReplacePixelsFirst)
+            {
+                if (_reducedDmcImage == null)
                 {
-                    if (_reducedDmcImage == null)
-                    {
-                        _reducedDmcImage = _reducedImage.Copy();
-                        ImageProcessing.ReplacePixelsWithDMC(_reducedDmcImage, _quantizer.colorComparer, _quantizer.ditherer);
-                    }
-                    _quantizer.SetImage(_reducedDmcImage);
+                    _reducedDmcImage = _reducedImage.Clone();
+                    ImageProcessing.ReplacePixelsWithDMC(_reducedDmcImage, _quantizer.colorComparer, _quantizer.ditherer);
                 }
-                else
-                {
-                    _quantizer.SetImage(_reducedImage);
-                }
+                _quantizer.SetImage(_reducedDmcImage);
+            }
+            else
+            {
+                _quantizer.SetImage(_reducedImage);
+            }
+            var settingsCode = Options.GetSettingsCode();
+            List<Floss> palette;
+            if (!_palettes.TryGetValue(settingsCode, out palette))
+            {
                 switch (Options.ColorSpace)
                 {
                     case ColorSpace.Rgb:
-                        _quantizer.GeneratePalette<Rgb>(Options.MaxColors);
+                        palette = _quantizer.GeneratePalette(Options.MaxColors, ColorSpace.Rgb);
                         break;
                     case ColorSpace.Lab:
-                        _quantizer.GeneratePalette<Lab>(Options.MaxColors);
-                        break;
-                    case ColorSpace.Hsv:
-                        _quantizer.GeneratePalette<Hsv>(Options.MaxColors);
-                        break;
-                    case ColorSpace.Ycc:
-                        _quantizer.GeneratePalette<Ycc>(Options.MaxColors);
-                        break;
-                    case ColorSpace.Luv:
-                        _quantizer.GeneratePalette<Luv>(Options.MaxColors);
+                        palette = _quantizer.GeneratePalette(Options.MaxColors, ColorSpace.Lab);
                         break;
                     default:
-                        _quantizer.GeneratePalette<Rgb>(Options.MaxColors);
+                        palette = _quantizer.GeneratePalette(Options.MaxColors, ColorSpace.Rgb);
                         break;
                 };
-                _quantizedImage = _quantizer.GetQuantizedImage(true);
+                _palettes[settingsCode] = palette;
             }
+            _currentPalette = palette;
+            _quantizedImage = _quantizer.GetQuantizedImage(palette);
+            _quantizer.RestrictFlossPalette();
             return ImageProcessing.Stretch(_quantizedImage, Options.OutputStitchSize, Options.Net);
         }
         public ExcelPackage GenerateExcelSpreadsheet()
@@ -123,15 +139,44 @@ namespace Embroider
                 Width = _quantizedImage.Width
             };
         }
-        private void setReducedImage(Image<Rgb, double> image, int size)
+
+        public StitchMap GetStitchMap()
         {
-            _reducedImage = ImageProcessing.MeanReduce(image, size);
+            return new StitchMap(_quantizer.DmcFlossMap, _quantizer.FlossPalette);
+        }
+
+        public Image<Rgb24> ExcludeFlosses(string[] flossNumbers)
+        {
+            var newPalette = _currentPalette.ToList();
+            for (int i=0; i<flossNumbers.Length; i++)
+            {
+                var floss = newPalette.Find(f => f.Number == flossNumbers[i]);
+                newPalette.Remove(floss);
+            }
+            return ImageProcessing.Stretch(_quantizer.GetQuantizedImage(newPalette), Options.OutputStitchSize, Options.Net);
+        }
+
+        public void ModifyPalette(List<Floss> flosses)
+        {
+            _options.Flosses = flosses;
+            _palettes.Clear();
+            _quantizer.AvailableFlosses = flosses;
+            _quantizedImage = null;
+        }
+        private void setReducedImage(Image<Rgb24> image, int stitchSize, int width)
+        {
+            if (stitchSize > 0)
+                _reducedImage = ImageProcessing.MeanReduce(image, stitchSize);
+            else
+                _reducedImage = image.Clone(x => x.Resize(width, (int)((double)width / image.Width), KnownResamplers.Lanczos3));
+
         }
         private void setQuantizer(QuantizerType type, 
             MergeMode octreeMode = MergeMode.LEAST_IMPORTANT, 
             DithererType dithererType = DithererType.None, 
             ColorComparerType colorComparerType = ColorComparerType.DE76,
-            int dithererStrength = 255)
+            int dithererStrength = 255,
+            List<Floss> flosses = null)
         {
             switch (type)
             {
@@ -153,10 +198,14 @@ namespace Embroider
                 case QuantizerType.ModifiedMedianCut:
                     _quantizer = new ModifiedMedianCutQuantizer(_reducedImage, 6, 0.85f, dithererType, colorComparerType, dithererStrength);
                     break;
+                case QuantizerType.Wu:
+                    _quantizer = new WuQuantizer(_reducedImage, dithererType, colorComparerType, dithererStrength);
+                    break;
                 default:
                     _quantizer = new ModifiedMedianCutQuantizer(_reducedImage, 6, 0.85f, dithererType, colorComparerType, dithererStrength);
                     break;
             }
+            _quantizer.AvailableFlosses = flosses;
         }
 
     }
@@ -176,34 +225,21 @@ namespace Embroider
         /// </summary>
         public OperationOrder OperationOrder { get; set; } = OperationOrder.QuantizeFirst;
         /// <summary>
-        /// How many pixels (in width and height) from original image will make up a single stitch. <br/>
-        /// Default: 4
+        /// How many stitches will the output image have in width <br/>
+        /// Default: 100
         /// </summary>
-        public int StichSize { get; set; } = 4;
+        public int WidthStitchCount { get; set; } = 0;
+        public int StitchSize { get; set; } = 4;
         /// <summary>
         /// Maximum number of different colored stitches. <br/>
         /// Default: 64
         /// </summary>
         public int MaxColors { get; set; } = 64;
-        private int _outputStitchSize = 0;
         /// <summary>
         /// How many pixels (in width and height) make up a single stitch in output image. <br/>
         /// If set to 0 (default) it will the number of pixels in StitchSize
         /// </summary>
-        public int OutputStitchSize
-        {
-            get
-            {
-                if (_outputStitchSize == 0)
-                    return StichSize;
-                else
-                    return _outputStitchSize;
-            }
-            set
-            {
-                _outputStitchSize = value;
-            }
-        }
+        public int OutputStitchSize { get; set; } = 4;
         /// <summary>
         /// Set to true to draw a net separating stitches in the output image. <br/>
         /// Default: false
@@ -219,6 +255,23 @@ namespace Embroider
         public ColorSpace ColorSpace { get; set; } = ColorSpace.Rgb;
         public ColorComparerType ColorComparerType { get; set; } = ColorComparerType.DE76;
         public int DithererStrength { get; set; } = 255;
+        public List<Floss> Flosses { get; set; }
+
+        public string GetSettingsCode()
+        {
+            var codeBuilder = new StringBuilder();
+            codeBuilder.Append((int)QuantizerType);
+            codeBuilder.Append((int)WidthStitchCount);
+            codeBuilder.Append((int)StitchSize);
+            codeBuilder.Append((int)MaxColors);
+            codeBuilder.Append((int)OctreeMode);
+            codeBuilder.Append((int)DithererType);
+            codeBuilder.Append((int)DithererStrength);
+            codeBuilder.Append((int)ColorSpace);
+            codeBuilder.Append((int)ColorComparerType);
+
+            return codeBuilder.ToString();
+        }
     }
 
     

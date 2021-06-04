@@ -1,11 +1,11 @@
-﻿using Emgu.CV;
-using Emgu.CV.Structure;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using Embroider.Ditherers;
 using static Embroider.Enums;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Embroider.Quantizers
 {
@@ -17,7 +17,7 @@ namespace Embroider.Quantizers
         public int MaxDepth { get; }
         private MergeMode _mergeMode;
 
-        public OctreeQuantizer(Image<Rgb, double> image, 
+        public OctreeQuantizer(Image<Rgb24> image, 
             int maxDepth, 
             MergeMode mergeMode = MergeMode.LEAST_IMPORTANT, 
             DithererType dithererType = DithererType.None, 
@@ -36,6 +36,8 @@ namespace Embroider.Quantizers
         {
             Root = new OctreeNode(0, this);
             Palette.Clear();
+            for (int i = 0; i < MaxDepth; i++)
+                Levels[i].Clear();
             for (int i=0; i<pixels.Count; i++)
             {
                 addColor(pixels[i]);

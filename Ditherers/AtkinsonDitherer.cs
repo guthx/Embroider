@@ -1,5 +1,5 @@
-﻿using Emgu.CV;
-using Emgu.CV.Structure;
+﻿using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,7 +8,7 @@ namespace Embroider.Ditherers
 {
     public class AtkinsonDitherer : Ditherer
     {
-        public AtkinsonDitherer(Image<Rgb, double> image, int maxDif = 255) : base(image, maxDif)
+        public AtkinsonDitherer(Image<Rgb24> image, int maxDif = 255) : base(image, maxDif)
         {
         }
         private int[,] _coeficcientMatrix = new int[,]

@@ -1,7 +1,5 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
-using Emgu.CV;
-using Emgu.CV.Structure;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -9,6 +7,8 @@ using System.IO;
 using System.Linq;
 using Embroider.Quantizers;
 using static Embroider.Enums;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Embroider
 {
@@ -21,30 +21,32 @@ namespace Embroider
     {
         static void Main(string[] args)
         {
-
-            /*
-            var ahri = new Image<Rgb, double>(@"F:\Inne\ahri\ahri_new.jpg");
             
+
+            Image<Rgb24> ahri = Image.Load<Rgb24>(@"F:\Inne\ahri\ahri.jpg");
+            var excluded = new string[] { "3803", "3722", "2221", "794" };
             var embroider = new Embroider(ahri, new EmbroiderOptions
             {
                 OperationOrder = OperationOrder.QuantizeFirst,
-                StichSize = 4,
-                MaxColors = 50,
-                QuantizerType = QuantizerType.KMeans,
+                WidthStitchCount = 0,
+                StitchSize = 4,
+                MaxColors = 32,
+                QuantizerType = QuantizerType.ModifiedMedianCut,
                 OutputStitchSize = 4,
                 DithererType = DithererType.Atkinson,
                 ColorSpace = ColorSpace.Rgb,
-                ColorComparerType = ColorComparerType.WeightedEuclideanDistance
+                ColorComparerType = ColorComparerType.WeightedEuclideanDistance,
+                DithererStrength = 10,
             });
-            embroider.GenerateImage().Convert<Bgr, byte>().Save(@"F:\Inne\ahri\embroider.png");
-            */
-            var test = new Image<Rgb, double>(100, 100, new Rgb(255, 255, 255));
-            test.Data[0, 0, 1] += 23.2;
+            embroider.GenerateImage();
+            embroider.ExcludeFlosses(excluded).SaveAsPng(@"F:\Inne\ahri\embroider.png");
             
+            
+
             /*
             var flosses = new List<DMCRGB>();
             var flossesLab = new List<DmcFloss>();
-            var convertHelper = new Image<Rgb, byte>(1, 1);
+            var convertHelper = new Image<Rgb24><Rgb, byte>(1, 1);
             using (var reader = new StreamReader(@"F:\Inne\ahri\palette.csv"))
             using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
             {

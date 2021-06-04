@@ -1,6 +1,4 @@
-﻿using Emgu.CV;
-using Emgu.CV.Structure;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.ML;
@@ -12,44 +10,28 @@ using System.Linq;
 using Embroider.Comparers;
 using Embroider.Ditherers;
 using Embroider.Quantizers;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp;
 
 namespace Embroider
 {
     public static class ImageProcessing
     {
-        public static List<DmcFloss> DmcFlosses;
-        public static void IncreaseContrast(Image<Rgb, double> image, float contrast)
+        public static List<Floss> DmcFlosses;
+
+        public static Image<Rgb24> MeanReduce(Image<Rgb24> image, int pixelSize)
         {
-            double sigmoid(double x)
-            {
-                return 1*(-128 + 256 * (1 / (1 + Math.Exp(-x / 40))));
-            }
-            for (int w = 0; w < image.Width; w++)
-                for (int h = 0; h < image.Height; h++)
-                {
-                    var newY = sigmoid(image.Data[h, w, 1] - 128) + 128;
-                    var newZ = sigmoid(image.Data[h, w, 2] - 128) + 128;
-
-                    // var newY = (image.Data[h, w, 1] - 128) * contrast + image.Data[h, w, 1];
-                    // var newZ = (image.Data[h, w, 2] - 128) * contrast + image.Data[h, w, 2];
-
-                    image[h, w] = new Rgb(image.Data[h, w, 0], newY, newZ);
-                }
-                    
-        }
-
-        public static Image<Rgb, double> MeanReduce(Image<Rgb, double> image, int pixelSize)
-        {
-            var newImage = new Image<Rgb, double>((image.Width - 1) / pixelSize + 1, (image.Height - 1) / pixelSize + 1);
+            var newImage = new Image<Rgb24>((image.Width - 1) / pixelSize + 1, (image.Height - 1) / pixelSize + 1);
             var pixelValues = new double[(image.Height - 1) / pixelSize + 1, (image.Width - 1) / pixelSize + 1, 3];
             var pixelCount = new int[(image.Height - 1) / pixelSize + 1, (image.Width - 1) / pixelSize + 1];
             for (int h=0; h<image.Height; h++)
             {
+                var pixelRow = image.GetPixelRowSpan(h);
                 for(int w=0; w<image.Width; w++)
                 {
-                    pixelValues[h / pixelSize, w / pixelSize, 0] += image.Data[h, w, 0];
-                    pixelValues[h / pixelSize, w / pixelSize, 1] += image.Data[h, w, 1];
-                    pixelValues[h / pixelSize, w / pixelSize, 2] += image.Data[h, w, 2];
+                    pixelValues[h / pixelSize, w / pixelSize, 0] += pixelRow[w].R;
+                    pixelValues[h / pixelSize, w / pixelSize, 1] += pixelRow[w].G;
+                    pixelValues[h / pixelSize, w / pixelSize, 2] += pixelRow[w].B;
                     pixelCount[h / pixelSize, w / pixelSize]++;
                 }
             }
@@ -60,67 +42,63 @@ namespace Embroider
                     var x = pixelValues[h, w, 0] / pixelCount[h, w];
                     var y = pixelValues[h, w, 1] / pixelCount[h, w];
                     var z = pixelValues[h, w, 2] / pixelCount[h, w];
-                    newImage[h, w] = new Rgb(x, y, z);
+                    newImage[w, h] = new Rgb24((byte)x, (byte)y, (byte)z);
                 }
             }
             return newImage;
         }
 
-        public static Image<Rgb, double> Stretch(Image<Rgb, double> image, int sizeMultiplier, bool net = false)
+        public static Image<Rgb24> Stretch(Image<Rgb24> image, int sizeMultiplier, bool net = false)
         {
             if (!net)
             {
-                var newImage = new Image<Rgb, double>(image.Width * sizeMultiplier, image.Height * sizeMultiplier);
+                var newImage = new Image<Rgb24>(image.Width * sizeMultiplier, image.Height * sizeMultiplier);
                 for (int h=0; h<newImage.Height; h++)
                 {
+                    var pixelRow = newImage.GetPixelRowSpan(h);
                     for(int w=0; w<newImage.Width; w++)
                     {
-                        newImage[h, w] = image[h / sizeMultiplier, w / sizeMultiplier];
+                        pixelRow[w] = image[w / sizeMultiplier, h / sizeMultiplier];
                     }
                 }
                 return newImage;
             }
             else
             {
-                var newImage = new Image<Rgb, double>(image.Width * sizeMultiplier + image.Width - 1, image.Height * sizeMultiplier + image.Height - 1);
+                var newImage = new Image<Rgb24>(image.Width * sizeMultiplier + image.Width - 1, image.Height * sizeMultiplier + image.Height - 1);
                 for (int h=0; h<newImage.Height; h++)
                 {
+                    var pixelRow = newImage.GetPixelRowSpan(h);
                     for (int w=0; w<newImage.Width; w++)
                     {
                         if ( (h+1) % (sizeMultiplier+1) == 0 || (w+1) % (sizeMultiplier+1) == 0)
                         {
-                            newImage[h, w] = new Rgb(120, 120, 120);
+                            pixelRow[w] = new Rgb24(120, 120, 120);
                         }
                         else
-                            newImage[h, w] = image[(h - (h+1) / (sizeMultiplier+1)) / sizeMultiplier, (w - (w+1) / (sizeMultiplier+1)) / sizeMultiplier];
+                            pixelRow[w] = image[(w - (w+1) / (sizeMultiplier+1)) / sizeMultiplier, (h - (h+1) / (sizeMultiplier+1)) / sizeMultiplier];
                     }
                 }
                 return newImage;
             }
             
         }
-        public static void ReplacePixelsWithDMC(Image<Rgb, double> image, ColorComparer colorComparer, Ditherer ditherer)
+        public static void ReplacePixelsWithDMC(Image<Rgb24> image, ColorComparer colorComparer, Ditherer ditherer)
         {
-            var colorsCount = new Dictionary<DmcFloss, int>();
-            DmcFlosses = Flosses.Dmc;
+            var colorsCount = new Dictionary<Floss, int>();
+            DmcFlosses = Flosses.Dmc();
 
             for(int h=0; h<image.Height; h++)
             {
+                var pixelRow = image.GetPixelRowSpan(h);
                 for(int w=0; w<image.Width; w++)
                 {
                     var deltaE = new double[DmcFlosses.Count];
                     for (int i = 0; i < DmcFlosses.Count; i++)
                     {
-                        var color1 = new Color(DmcFlosses[i].Red, DmcFlosses[i].Green, DmcFlosses[i].Blue);
-                        var color2 = new Color(image.Data[h, w, 0], image.Data[h, w, 1], image.Data[h, w, 2]);
-                        /*
-                        deltaE[i] = Math.Sqrt(
-                            Math.Pow((DmcFlosses[i].L) - (image.Data[h, w, 0]), 2) +
-                            Math.Pow(DmcFlosses[i].a - image.Data[h, w, 1], 2) +
-                            Math.Pow(DmcFlosses[i].b - image.Data[h, w, 2], 2));
-                        */
+                        var color1 = new Quantizers.Color(DmcFlosses[i].Red, DmcFlosses[i].Green, DmcFlosses[i].Blue);
+                        var color2 = new Quantizers.Color(pixelRow[w].R, pixelRow[w].G, pixelRow[w].B);
                         deltaE[i] = colorComparer.Compare(color1, color2);
-                        //deltaE[i] = Lab2.Compare(color1, color2);
                     }
                     var dmc = DmcFlosses[Array.IndexOf(deltaE, deltaE.Min())];
                     if (colorsCount.ContainsKey(dmc))
@@ -131,7 +109,7 @@ namespace Embroider
                     {
                         colorsCount.Add(dmc, 1);
                     }
-                    image[h, w] = new Rgb(dmc.Red, dmc.Green, dmc.Blue);
+                    pixelRow[w] = new Rgb24((byte)dmc.Red, (byte)dmc.Green, (byte)dmc.Blue);
                 }
             }
         }

@@ -8,7 +8,7 @@ namespace Embroider
     {
         public enum QuantizerType
         {
-            SimplePopularity, Popularity, Octree, MedianCut, KMeans, ModifiedMedianCut
+            SimplePopularity, Popularity, Octree, MedianCut, KMeans, ModifiedMedianCut, Wu
         }
 
         public enum OperationOrder

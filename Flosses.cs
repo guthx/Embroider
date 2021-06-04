@@ -10,23 +10,19 @@ namespace Embroider
 {
     public static class Flosses
     {
-        private static List<DmcFloss> dmcFlosses;
-
-        public static List<DmcFloss> Dmc
+        private static List<Floss> dmcFlosses;
+        public static List<Floss> Dmc()
         {
-            get
+            if (dmcFlosses == null)
             {
-                if (dmcFlosses == null)
+                dmcFlosses = new List<Floss>();
+                using (var reader = new StreamReader(@"dmc_lab2.csv"))
+                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                 {
-                    dmcFlosses = new List<DmcFloss>();
-                    using (var reader = new StreamReader(@"F:\Inne\ahri\dmc_lab2.csv"))
-                    using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
-                    {
-                        dmcFlosses = csv.GetRecords<DmcFloss>().ToList();
-                    }
+                    dmcFlosses = csv.GetRecords<Floss>().ToList();
                 }
-                return dmcFlosses;
             }
+            return dmcFlosses;
         }
     }
 }
